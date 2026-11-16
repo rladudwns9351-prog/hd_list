@@ -33,6 +33,11 @@ a{color:inherit}
 .auth-box .btn{width:100%;height:44px;margin-top:8px}
 .auth-sw{margin-top:18px;text-align:center;font-size:13px;color:var(--gray)}
 .auth-sw a{color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none}
+.pwwrap{position:relative}
+.pwwrap input{padding-right:64px}
+.pwbtn{position:absolute;right:6px;top:5px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:4px;background:#fff;font:inherit;font-size:12px;font-weight:700;color:var(--gray);cursor:pointer}
+.pwbtn:hover{border-color:var(--ink);color:var(--ink)}
+.pwwarn{font-size:12px;font-weight:700;color:var(--orange);background:var(--orange-l);border:1px solid #fdba74;border-radius:4px;padding:7px 10px;line-height:1.5}
 .auth-msg{margin-top:14px;font-size:13px;color:var(--red);min-height:18px;text-align:center;font-weight:600}
 .block{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#140405;padding:20px}
 .block-box{width:520px;max-width:100%;background:#fff;border-top:6px solid var(--red);border-radius:6px;padding:40px 36px;text-align:center}
@@ -297,7 +302,10 @@ tr.warn td{background:var(--orange-l)!important}
     <div class="brand">로드온 모빌리티</div>
     <h2 id="authTitle">GA 확정리스트</h2>
     <div class="f">이메일<input id="aEmail" type="email" placeholder="name@company.com" autocomplete="username"></div>
-    <div class="f">비밀번호<input id="aPw" type="password" placeholder="6자 이상" autocomplete="current-password"></div>
+    <div class="f">비밀번호
+      <div class="pwwrap"><input id="aPw" type="password" placeholder="6자 이상 · 대소문자 구분" autocomplete="current-password"><button type="button" class="pwbtn" id="aPwShow" tabindex="-1">보기</button></div>
+      <div class="pwwarn hidden" id="aPwWarn"></div>
+    </div>
     <button class="btn p" id="aSubmit">로그인</button>
     <div class="auth-msg" id="aMsg"></div>
     <div class="auth-sw" id="aSwitch">처음 이용하시나요? <a onclick="toggleAuth()">최초 가입</a></div>
@@ -1820,6 +1828,24 @@ async function delIpRule(ip){
 /* ---------------- BOOT ---------------- */
 $('#aSubmit').addEventListener('click', submitAuth);
 $('#aPw').addEventListener('keydown', e => { if(e.key==='Enter') submitAuth(); });
+/* 비밀번호 보기 · Caps Lock / 한글 입력 경고 */
+const PW = { caps:false };
+function pwWarn(){
+  const msgs = [];
+  if(PW.caps) msgs.push('⚠ Caps Lock이 켜져 있습니다. (대문자로 입력됩니다)');
+  if(/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test($('#aPw').value)) msgs.push('⚠ 한글이 입력되었습니다. 한/영 키를 눌러 영문으로 입력하세요.');
+  $('#aPwWarn').innerHTML = msgs.join('<br>');
+  $('#aPwWarn').classList.toggle('hidden', !msgs.length);
+}
+['keydown','keyup'].forEach(ev => $('#aPw').addEventListener(ev, e => { if(e.getModifierState){ PW.caps = e.getModifierState('CapsLock'); pwWarn(); } }));
+$('#aPw').addEventListener('input', pwWarn);
+$('#aPwShow').addEventListener('mousedown', e => e.preventDefault());   // 버튼 클릭 시 입력칸 포커스 유지
+$('#aPwShow').addEventListener('click', () => {
+  const show = $('#aPw').type === 'password';
+  $('#aPw').type = show ? 'text' : 'password';
+  $('#aPwShow').textContent = show ? '숨김' : '보기';
+  $('#aPw').focus();
+});
 (async function boot(){
   const chk = await SEC.check(); S.ip = chk.ip || '';
   if(chk.blocked){ await SEC.log('BLOCKED_IP', null, '차단된 IP 접속 시도'); return showBlock('차단된 IP에서의 접근입니다.' + (chk.reason ? ` (${chk.reason})` : '')); }
