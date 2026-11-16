@@ -59,6 +59,7 @@ a{color:inherit}
 .nav a:hover{color:#fff;background:#141518}
 .nav a.on{color:#fff;border-left-color:var(--blue);background:#141518}
 .nav .ic{width:16px;text-align:center;font-size:13px}
+.nav-sep{height:1px;background:#2a2d33;margin:8px 18px}
 .nav .bdg{margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:1px 7px}
 .side .me{margin-top:auto;padding:18px 22px;border-top:1px solid #1d1f23;font-size:12px;color:#a1a1aa}
 .side .me b{display:block;color:#fff;font-size:13px;margin-bottom:2px}
@@ -152,6 +153,22 @@ tfoot td{font-weight:800;background:#fafafa;border-top:1px solid var(--line);bor
 .st.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .st.off{border-color:var(--orange);color:var(--orange);background:var(--orange-l)}
 .st:disabled{cursor:default}
+.st.chg{outline:2px dashed var(--ink);outline-offset:2px}
+tr.pend td{background:var(--blue-l)!important}
+.imgbtn{display:inline-flex;align-items:center;gap:5px;vertical-align:middle}
+.imgbtn.none{color:var(--gray-l);font-size:12px}
+#lTable table{font-size:12.5px}
+#lTable th,#lTable td{padding-left:5px;padding-right:5px}
+/* 인도·정산·보험증명서·저장/관리 열은 우측 고정 (가로 스크롤해도 항상 보임) */
+#lTable .pin{position:sticky;box-sizing:border-box}
+#lTable .pin.c1,#lTable .pin.c2,#lTable .pin.c3{width:88px;min-width:88px;max-width:88px;padding-left:2px;padding-right:2px}
+#lTable .pin.c4{width:164px;min-width:164px;max-width:164px;right:0}
+#lTable .pin.c3{right:164px}
+#lTable .pin.c2{right:252px}
+#lTable .pin.c1{right:340px;box-shadow:-1px 0 0 var(--line)}
+#lTable tbody td.pin{background:#fff}
+#lTable tbody tr:hover td.pin{background:#fbfcff}
+#lTable .pin .st{padding:0 8px}
 .fchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
 .fchips .lb{font-size:12px;color:var(--gray);font-weight:700;margin-right:4px}
 .fchip{height:32px;padding:0 14px;border-radius:16px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:12px;font-weight:800;cursor:pointer;color:var(--ink)}
@@ -168,7 +185,12 @@ tfoot td{font-weight:800;background:#fafafa;border-top:1px solid var(--line);bor
 .fg .s2{grid-column:span 2}
 .fg .s3{grid-column:span 3}
 .fg .s4{grid-column:1/-1}
-.fg .f input,.fg .f select,.fg .f textarea{width:100%}
+.fg .f input,.fg .f select,.fg .f textarea{width:100%;min-width:0}
+.fg .seg{display:flex}
+.fg .seg button{flex:1;padding:0 8px}
+#p-deal .card{max-width:1120px}
+.lb{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-height:15px;white-space:nowrap}
+.lb .hint{min-height:0}
 .dwrap{display:flex;gap:6px;position:relative}
 .dwrap input[type=text]{flex:1}
 .dpick{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
@@ -285,6 +307,7 @@ tr.warn td{background:var(--orange-l)!important}
   .side .nav{display:flex;overflow-x:auto;padding:0}
   .side .nav a{border-left:0;border-bottom:3px solid transparent;padding:12px 14px}
   .side .nav a.on{border-bottom-color:var(--blue)}
+  .nav-sep{display:none}
   .side .me{display:none}
   .main{margin-left:0}
   .content{padding:16px}
@@ -335,10 +358,13 @@ tr.warn td{background:var(--orange-l)!important}
     <div class="logo"><div class="t1">로드온 모빌리티</div><div class="t2">GA 확정리스트</div></div>
     <nav class="nav" id="nav">
       <a data-p="dash" class="on"><span class="ic">■</span>대시보드</a>
+      <div class="nav-sep"></div>
       <a data-p="deal"><span class="ic">＋</span>확정 등록</a>
       <a data-p="list"><span class="ic">≡</span>확정 리스트</a>
+      <div class="nav-sep"></div>
       <a data-p="report"><span class="ic">↓</span>리포트 · 내보내기</a>
       <a data-p="settings"><span class="ic">⚙</span>업체 · 설정</a>
+      <div class="nav-sep admin-only"></div>
       <a data-p="admin" class="admin-only"><span class="ic">◆</span>회원 · 접속기록<span class="bdg hidden" id="navDanger"></span></a>
     </nav>
     <div class="me"><b id="meName">-</b><span id="meRole">-</span><button class="btn s" onclick="logout()">로그아웃</button></div>
@@ -393,40 +419,33 @@ tr.warn td{background:var(--orange-l)!important}
 
           <div class="sec-t">기본 정보</div>
           <div class="fg">
-            <label class="f"><span class="req">확정일자</span>
-              <div class="dwrap"><input type="text" id="fDate" placeholder="예) 2026-11-16 / 20261116" autocomplete="off"><button type="button" class="btn" onclick="pickDate('fDate')">달력</button><input type="date" id="fDatePick" class="dpick" tabindex="-1"></div>
+            <label class="f"><span class="lb"><span class="req">확정일자</span></span>
+              <div class="dwrap"><input type="text" id="fDate" placeholder="예) 20261116" autocomplete="off"><button type="button" class="btn" onclick="pickDate('fDate')">달력</button><input type="date" id="fDatePick" class="dpick" tabindex="-1"></div>
             </label>
-            <label class="f"><span class="req">확정딜번호</span><input id="fDealNo" placeholder="견적번호(딜번호)"></label>
-            <label class="f"><span class="req">고객명</span><input id="fCust"></label>
-            <label class="f"><span class="req">연락처</span><input id="fPhone" inputmode="numeric" placeholder="010-0000-0000"></label>
-            <label class="f">캐피탈사<select id="fCap"></select></label>
-            <div class="f">상품<div class="seg" id="fProd"><button type="button" data-v="렌트">렌트</button><button type="button" data-v="리스">리스</button></div></div>
-            <label class="f">차종<input id="fCar" list="carList" placeholder="예) 그랜저"></label>
-            <label class="f">차량 계약번호<input id="fContract"></label>
-            <label class="f s2">차대번호 <span class="hint" id="fVinCnt" style="display:inline"></span><input id="fVin" maxlength="20" placeholder="17자리" style="text-transform:uppercase"></label>
-            <label class="f s2"><span class="req">취득원가 (원)</span><input id="fAcq" class="money" inputmode="numeric" placeholder="0"></label>
+            <label class="f"><span class="lb"><span class="req">확정딜번호</span><span class="hint" id="fDealCnt"></span></span><input id="fDealNo" maxlength="7" placeholder="영문/숫자 7자리" autocomplete="off"></label>
+            <label class="f"><span class="lb"><span class="req">고객명</span></span><input id="fCust"></label>
+            <label class="f"><span class="lb"><span class="req">연락처</span></span><input id="fPhone" inputmode="numeric" placeholder="010-0000-0000"></label>
+            <label class="f"><span class="lb">캐피탈사</span><select id="fCap"></select></label>
+            <div class="f"><span class="lb">상품</span><div class="seg" id="fProd"><button type="button" data-v="렌트">렌트</button><button type="button" data-v="리스">리스</button></div></div>
+            <label class="f"><span class="lb">차종</span><input id="fCar" list="carList" placeholder="예) 그랜저"></label>
+            <label class="f"><span class="lb">차량 계약번호</span><input id="fContract"></label>
+            <label class="f"><span class="lb">차대번호<span class="hint" id="fVinCnt"></span></span><input id="fVin" maxlength="20" placeholder="17자리" style="text-transform:uppercase"></label>
+            <label class="f"><span class="lb"><span class="req">취득원가 (원)</span></span><input id="fAcq" class="money" inputmode="numeric" placeholder="예) 35,000,000"></label>
           </div>
 
           <div class="sec-t">영업 구분 <span class="tag">GA 건은 관리 직원 · 직영업 건은 영업 직원</span></div>
           <div class="fg">
-            <div class="f">유입 구분<div class="seg" id="fCh"><button type="button" data-v="GA" class="on">GA</button><button type="button" data-v="직영업">직영업</button></div></div>
-            <label class="f">GA 업체명 <span class="hint">새 이름 입력 시 자동 등록</span><input id="fGa" list="gaList" placeholder="입력 또는 선택"></label>
-            <label class="f s2">담당 직원<select id="fStaff"></select></label>
+            <div class="f"><span class="lb">유입 구분</span><div class="seg" id="fCh"><button type="button" data-v="GA" class="on">GA</button><button type="button" data-v="직영업">직영업</button></div></div>
+            <label class="f"><span class="lb">GA 업체명<span class="hint">새 이름 입력 시 자동 등록</span></span><input id="fGa" list="gaList" placeholder="입력 또는 선택"></label>
+            <label class="f"><span class="lb">담당 직원</span><select id="fStaff"></select></label>
           </div>
 
           <div class="sec-t">탁송 · 용품</div>
           <div class="fg">
-            <label class="f"><span class="req">탁송지역 (시·도)</span><select id="fRegion"></select></label>
-            <label class="f s3">상세 주소<input id="fRegionDetail" placeholder="시·군·구 및 상세 주소"></label>
-            <label class="f s4"><span class="req">용품작업내용</span><textarea id="fAcc" rows="2" placeholder="예) 블랙박스, 썬팅, PPF / 없으면 '없음'"></textarea></label>
-            <label class="f s4">메모<textarea id="fMemo" rows="2"></textarea></label>
-          </div>
-
-          <div class="sec-t">진행 상태 <span class="tag o">버튼을 누르면 오늘 날짜로 완료 처리</span></div>
-          <div class="fg">
-            <div class="f">인도<div class="stbox"><button type="button" class="st off" id="fDlvBtn" onclick="formSt('dlv')">인도 미완료</button><input type="date" id="fDlvAt"></div></div>
-            <div class="f">정산<div class="stbox"><button type="button" class="st off" id="fStlBtn" onclick="formSt('stl')">정산 미완료</button><input type="date" id="fStlAt"></div></div>
-            <div class="f" id="fInsWrap">보험가입증명서 회신 (리스)<div class="stbox"><button type="button" class="st off" id="fInsBtn" onclick="formSt('ins')">미회신</button><input type="date" id="fInsAt"></div></div>
+            <label class="f"><span class="lb"><span class="req">탁송지역 (시·도)</span></span><select id="fRegion"></select></label>
+            <label class="f s2"><span class="lb">상세 주소</span><input id="fRegionDetail" placeholder="시·군·구 및 상세 주소"></label>
+            <label class="f s2" style="grid-column:1 / span 2"><span class="lb"><span class="req">용품작업내용</span></span><textarea id="fAcc" rows="2" placeholder="예) 블랙박스, 썬팅, PPF / 없으면 '없음'"></textarea></label>
+            <label class="f s2"><span class="lb">메모</span><textarea id="fMemo" rows="2"></textarea></label>
           </div>
 
           <div class="admin-only">
@@ -438,9 +457,9 @@ tr.warn td{background:var(--orange-l)!important}
                 <label class="f"><span class="req">법인수익인센티브 (%)</span><input id="fCorpPct" type="number" step="0.1" min="0" class="pct"><span class="hint" id="hCorp"></span></label>
                 <div class="f">&nbsp;<button type="button" class="btn" onclick="applyRule(true)">프로모션·슬라이딩 규칙 적용</button></div>
                 <label class="f">해당 월 프로모션 (%)<input id="fPromoPct" type="number" step="0.1" class="pct"><span class="hint" id="hPromo"></span></label>
-                <label class="f">해당 월 프로모션 (원)<input id="fPromoAmt" class="money" inputmode="numeric"></label>
+                <label class="f">해당 월 프로모션 (원)<input id="fPromoAmt" class="money" inputmode="numeric" placeholder="0"></label>
                 <label class="f">슬라이딩 (%)<input id="fSlidePct" type="number" step="0.1" class="pct"><span class="hint" id="hSlide"></span></label>
-                <label class="f">슬라이딩 (원)<input id="fSlideAmt" class="money" inputmode="numeric"></label>
+                <label class="f">슬라이딩 (원)<input id="fSlideAmt" class="money" inputmode="numeric" placeholder="0"></label>
               </div>
               <div class="hint" id="hRule" style="margin-top:10px"></div>
             </div>
@@ -633,7 +652,7 @@ const PALETTE = ['#1d4ed8','#0b0b0c','#60a5fa','#6b7280','#1e3a8a','#93c5fd','#9
 const S = {
   user:null, me:null, ip:'',
   staff:[], caps:[], ga:[], deals:[], inc:{}, promo:[], settings:{ dash:{ cmp_prev:true, cmp_yoy:true } }, attCount:{}, ipRules:[], logs:[],
-  page:'dash', metric:'count', listSt:'', editId:null, formSt:{}, formFiles:[], formDrop:null,
+  page:'dash', metric:'count', listSt:'', editId:null, pendSt:{}, formFiles:[], formDrop:null,
   charts:{}, report:null, listRows:[], adminTab:'members'
 };
 const isAdmin = () => S.me?.role === 'admin';
@@ -707,10 +726,14 @@ function uaShort(ua){ ua = ua||''; const os = /Windows/.test(ua)?'Windows':/Mac 
 
 document.addEventListener('input', e => {
   const t = e.target;
-  if(t.classList.contains('money')){
-    const neg = t.value.trim().startsWith('-'); const v = t.value.replace(/[^\d]/g,'');
-    t.value = v ? (neg?'-':'') + Number(v).toLocaleString('ko-KR') : (neg?'-':'');
+  if(t.classList.contains('money')){   // 금액: 천 단위 콤마 자동 (커서 위치 유지)
+    const pos = t.selectionStart ?? t.value.length, before = t.value.slice(0,pos).replace(/[^\d]/g,'').length;
+    const neg = t.value.trim().startsWith('-'); const v = t.value.replace(/[^\d]/g,'').replace(/^0+(?=\d)/,'');
+    t.value = v ? (neg?'-':'') + v.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : (neg?'-':'');
+    let i = 0, c = 0; while(i < t.value.length && c < before){ if(/\d/.test(t.value[i])) c++; i++; }
+    try{ t.setSelectionRange(i, i); }catch(err){}
   }
+  if(t.id==='fDealNo'){ t.value = t.value.replace(/[^A-Za-z0-9]/g,'').slice(0,7); dealNoHint(); }
   if(t.id==='fPhone') t.value = phoneFmt(t.value);
   if(t.classList.contains('bad')) t.classList.remove('bad');
 });
@@ -725,7 +748,7 @@ const DemoFiles = {
   removeDeal(id){ this.of(id).forEach(a=>this.remove(a.id)); }
 };
 const Demo = {
-  key:'roadon_ga_demo_v1', d:null,
+  key:'roadon_ga_demo_v2', d:null,
   load(){ if(this.d) return this.d; try{ this.d = JSON.parse(localStorage.getItem(this.key)); }catch(e){} if(!this.d){ this.d = this.seed(); this.save(); } return this.d; },
   save(){ try{ localStorage.setItem(this.key, JSON.stringify(this.d)); }catch(e){} },
   nextId(t){ const d = this.load(); d.seq[t] = (d.seq[t]||0)+1; return d.seq[t]; },
@@ -757,7 +780,7 @@ const Demo = {
           const dlv = age>20 || R()<0.25, stl = dlv && (age>45 || R()<0.3), ins = prod==='리스' && dlv && (age>30 || R()<0.4);
           const dlvAt = dlv ? [addDays(cd, 5+Math.floor(R()*15)), today].sort()[0] : null;
           let vin = 'KMH'; for(let j=0;j<14;j++) vin += vinCh[Math.floor(R()*vinCh.length)];
-          deals.push({ id, confirm_date:cd, deal_no:'HC'+(250000+id), customer_name:pick(fam)+pick(giv), phone:'010-'+(1000+Math.floor(R()*9000))+'-'+(1000+Math.floor(R()*9000)),
+          deals.push({ id, confirm_date:cd, deal_no:'HC'+(10000+id), customer_name:pick(fam)+pick(giv), phone:'010-'+(1000+Math.floor(R()*9000))+'-'+(1000+Math.floor(R()*9000)),
             capital_id:1, product:prod, car_model:pick(models), contract_no:'C'+(7000000+id), vin, acq_cost:(2500+Math.floor(R()*5500))*10000,
             channel:u.ch, ga_id:u.ga, staff_id:u.ch==='GA' ? pick([2,3]) : 4, delivery_region:pick(SIDO), delivery_detail:'', accessories:pick(['블랙박스+썬팅','썬팅','PPF 전면','없음','블랙박스']),
             memo:'', delivered:dlv, delivered_at:dlvAt, settled:stl, settled_at: stl ? [addDays(dlvAt, 10), today].sort()[0] : null,
@@ -1187,7 +1210,7 @@ function segVal(id){ return $(`#${id} button.on`)?.dataset.v || ''; }
 function setSeg(id, v){ $$(`#${id} button`).forEach(b => b.classList.toggle('on', b.dataset.v===v)); }
 function initDealForm(){
   if(S.formInit) return; S.formInit = true;
-  $$('#fProd button').forEach(b => b.onclick = () => { setSeg('fProd', segVal('fProd')===b.dataset.v ? '' : b.dataset.v); $('#fProd').classList.remove('bad'); syncInsVisible(); });
+  $$('#fProd button').forEach(b => b.onclick = () => { setSeg('fProd', segVal('fProd')===b.dataset.v ? '' : b.dataset.v); $('#fProd').classList.remove('bad'); });
   $$('#fCh button').forEach(b => b.onclick = () => { setSeg('fCh', b.dataset.v); syncChannel(); applyRule(false); });
   $('#fDate').addEventListener('blur', () => { const v = normDate($('#fDate').value); if(v===null){ $('#fDate').classList.add('bad'); toast('확정일자 형식을 확인하세요. 예) 2026-11-16 / 20261116', 1); } else { $('#fDate').value = v; applyRule(false); } });
   $('#fVin').addEventListener('input', () => { $('#fVin').value = $('#fVin').value.toUpperCase().replace(/\s/g,''); const n = $('#fVin').value.length; $('#fVinCnt').textContent = n ? `${n}/17` : ''; $('#fVinCnt').className = 'hint' + (n && n!==17 ? ' o' : ''); });
@@ -1201,26 +1224,18 @@ function pickDate(id){
   p.onchange = () => { $('#'+id).value = p.value; $('#'+id).classList.remove('bad'); applyRule(false); };
   try{ p.showPicker(); }catch(e){ p.click(); }
 }
+function dealNoHint(){ const n = $('#fDealNo').value.length; $('#fDealCnt').textContent = n ? `${n}/7` : ''; $('#fDealCnt').className = 'hint' + (n && n!==7 ? ' o' : ''); }
 function syncChannel(){ const ga = segVal('fCh')!=='직영업'; $('#fGa').disabled = !ga; if(!ga) $('#fGa').value=''; }
-function syncInsVisible(){ $('#fInsWrap').classList.toggle('hidden', segVal('fProd')!=='리스'); }
-const ST_DEF = { dlv:{ on:'delivered', at:'delivered_at', btn:'#fDlvBtn', inp:'#fDlvAt', lb:'인도', off:'인도 미완료' }, stl:{ on:'settled', at:'settled_at', btn:'#fStlBtn', inp:'#fStlAt', lb:'정산', off:'정산 미완료' }, ins:{ on:'ins_ok', at:'ins_at', btn:'#fInsBtn', inp:'#fInsAt', lb:'회신', off:'미회신' } };
-function paintFormSt(k){ const d = ST_DEF[k], on = !!S.formSt[k]; $(d.btn).className = 'st '+(on?'on':'off'); $(d.btn).textContent = on ? `✓ ${d.lb} 완료` : d.off; }
-function formSt(k){
-  const d = ST_DEF[k]; S.formSt[k] = !S.formSt[k];
-  $(d.inp).value = S.formSt[k] ? ($(d.inp).value || todayStr()) : '';
-  paintFormSt(k);
-}
-['dlv','stl','ins'].forEach(k => document.addEventListener('change', e => { if(e.target.id===ST_DEF[k].inp.slice(1)){ S.formSt[k] = !!e.target.value; paintFormSt(k); } }));
+const ST_DEF = { dlv:{ on:'delivered', at:'delivered_at', name:'인도', onLb:'완료', off:'미완료' }, stl:{ on:'settled', at:'settled_at', name:'정산', onLb:'완료', off:'미완료' }, ins:{ on:'ins_ok', at:'ins_at', name:'보험가입증명서', onLb:'회신', off:'미회신' } };
 function resetDealForm(){
   S.editId = null;
-  ['#fDate','#fDealNo','#fCust','#fPhone','#fCar','#fContract','#fVin','#fAcq','#fGa','#fRegionDetail','#fAcc','#fMemo','#fTotPct','#fPayPct','#fCorpPct','#fPromoPct','#fPromoAmt','#fSlidePct','#fSlideAmt','#fDlvAt','#fStlAt','#fInsAt'].forEach(id => { $(id).value=''; $(id).classList.remove('bad'); });
+  ['#fDate','#fDealNo','#fCust','#fPhone','#fCar','#fContract','#fVin','#fAcq','#fGa','#fRegionDetail','#fAcc','#fMemo','#fTotPct','#fPayPct','#fCorpPct','#fPromoPct','#fPromoAmt','#fSlidePct','#fSlideAmt'].forEach(id => { $(id).value=''; $(id).classList.remove('bad'); });
   $('#fDate').value = todayStr();
   $('#fRegion').value = ''; $('#fRegion').classList.remove('bad');
   $('#fCap').value = S.caps.find(c=>c.name==='현대캐피탈' && c.active)?.id || S.caps.find(c=>c.active)?.id || '';
-  setSeg('fProd',''); setSeg('fCh','GA'); syncChannel(); syncInsVisible();
+  setSeg('fProd',''); setSeg('fCh','GA'); syncChannel();
   $('#fStaff').innerHTML = staffOptions(null);
-  S.formSt = { dlv:false, stl:false, ins:false }; ['dlv','stl','ins'].forEach(paintFormSt);
-  $('#fVinCnt').textContent=''; $('#hRule').textContent='';
+  $('#fVinCnt').textContent=''; $('#fDealCnt').textContent=''; $('#hRule').textContent='';
   S.formDrop?.clear(); $('#fDrop').classList.remove('bad');
   $('#fFilesWrap').classList.add('hidden'); $('#fFiles').innerHTML='';
   $('#dealTitle').textContent = '확정 등록'; $('#fCancel').classList.add('hidden');
@@ -1233,16 +1248,13 @@ function editDeal(id){
   go('deal');
   S.editId = id;
   $('#dealTitle').textContent = `확정 수정 · ${d.deal_no}`; $('#pageTitle').textContent = '확정 수정'; $('#fCancel').classList.remove('hidden');
-  $('#fDate').value = d.confirm_date; $('#fDealNo').value = d.deal_no; $('#fCust').value = d.customer_name; $('#fPhone').value = d.phone||'';
+  $('#fDate').value = d.confirm_date; $('#fDealNo').value = d.deal_no; dealNoHint(); $('#fCust').value = d.customer_name; $('#fPhone').value = d.phone||'';
   $('#fCap').value = d.capital_id || ''; setSeg('fProd', d.product||''); $('#fCar').value = d.car_model||''; $('#fContract').value = d.contract_no||'';
   $('#fVin').value = d.vin||''; $('#fVin').dispatchEvent(new Event('input'));
   $('#fAcq').value = d.acq_cost ? fmt(d.acq_cost) : '';
   setSeg('fCh', d.channel||'GA'); syncChannel(); $('#fGa').value = d.ga_id ? gaName(d.ga_id) : '';
   $('#fStaff').innerHTML = staffOptions(d.staff_id);
   $('#fRegion').value = d.delivery_region||''; $('#fRegionDetail').value = d.delivery_detail||''; $('#fAcc').value = d.accessories||''; $('#fMemo').value = d.memo||'';
-  S.formSt = { dlv:!!d.delivered, stl:!!d.settled, ins:!!d.ins_ok };
-  $('#fDlvAt').value = d.delivered_at||''; $('#fStlAt').value = d.settled_at||''; $('#fInsAt').value = d.ins_at||'';
-  ['dlv','stl','ins'].forEach(paintFormSt); syncInsVisible();
   const i = S.inc[id] || {};
   $('#fTotPct').value = i.total_pct ?? ''; $('#fPayPct').value = i.pay_pct ?? ''; $('#fCorpPct').value = i.corp_pct ?? '';
   $('#fPromoPct').value = i.promo_pct ?? ''; $('#fPromoAmt').value = i.promo_amt ? fmt(i.promo_amt) : '';
@@ -1300,9 +1312,6 @@ function readDealForm(){
     vin: $('#fVin').value.trim().toUpperCase() || null, acq_cost: num($('#fAcq').value), channel: segVal('fCh') || 'GA',
     staff_id: Number($('#fStaff').value) || null, delivery_region: $('#fRegion').value, delivery_detail: $('#fRegionDetail').value.trim() || null,
     accessories: $('#fAcc').value.trim(), memo: $('#fMemo').value.trim() || null,
-    delivered: !!S.formSt.dlv, delivered_at: S.formSt.dlv ? ($('#fDlvAt').value || todayStr()) : null,
-    settled: !!S.formSt.stl, settled_at: S.formSt.stl ? ($('#fStlAt').value || todayStr()) : null,
-    ins_ok: segVal('fProd')==='리스' && !!S.formSt.ins, ins_at: (segVal('fProd')==='리스' && S.formSt.ins) ? ($('#fInsAt').value || todayStr()) : null
   };
 }
 function pctOk(v){ return v==='' || (Number(v)>=0 && Math.abs(Number(v)*10 - Math.round(Number(v)*10)) < 1e-9); }
@@ -1321,6 +1330,7 @@ async function saveDeal(){
   if(!fileCnt){ miss.push('확정견적서&고객서류'); $('#fDrop').classList.add('bad'); }
   if(isAdmin()){ need($('#fTotPct').value!=='', $('#fTotPct'), '총인센티브'); need($('#fPayPct').value!=='', $('#fPayPct'), '지급예정인센티브'); need($('#fCorpPct').value!=='', $('#fCorpPct'), '법인수익인센티브'); }
   if(miss.length){ alert('필수 항목을 입력하세요.\n\n· ' + miss.join('\n· ')); return; }
+  if(!/^[A-Za-z0-9]{7}$/.test(r.deal_no)){ $('#fDealNo').classList.add('bad'); alert(`확정딜번호는 영문/숫자 7자리로 입력하세요.\n\n입력값: ${r.deal_no}\n현재 ${r.deal_no.length}자리 / 기준 7자리`); $('#fDealNo').focus(); return; }
   if(r.vin && r.vin.length !== 17){ $('#fVin').classList.add('bad'); alert(`차대번호 자리수를 다시 확인하세요.\n\n입력값: ${r.vin}\n현재 ${r.vin.length}자리 / 기준 17자리`); $('#fVin').focus(); return; }
   if(S.deals.some(d => d.id!==S.editId && d.deal_no.trim().toLowerCase()===r.deal_no.toLowerCase())){ $('#fDealNo').classList.add('bad'); alert(`이미 등록된 확정딜번호입니다.\n\n${r.deal_no}`); return; }
   if(isAdmin()){
@@ -1341,7 +1351,7 @@ async function saveDeal(){
     const row = { ...r, ga_id:gaId };
     let id = S.editId;
     if(id) await DB.update('deals', id, row);
-    else { const ins = await DB.insert('deals', { ...row, created_by_email:S.me?.email||null }); id = ins.id; }
+    else { const ins = await DB.insert('deals', { ...row, delivered:false, delivered_at:null, settled:false, settled_at:null, ins_ok:false, ins_at:null, created_by_email:S.me?.email||null }); id = ins.id; }
     if(isAdmin()){
       const pv = id2 => $(id2).value==='' ? null : Math.round(Number($(id2).value)*10)/10;
       await DB.upsert('deal_incentives', { deal_id:id, total_pct:pv('#fTotPct'), pay_pct:pv('#fPayPct'), corp_pct:pv('#fCorpPct'),
@@ -1423,29 +1433,42 @@ function renderList(){
   const sAcq = rows.reduce((a,d)=>a+num(d.acq_cost),0);
   if(!rows.length){ $('#lTable').innerHTML = '<div class="empty">조회된 데이터가 없습니다.</div>'; $('#lNote').textContent=''; return; }
   const shown = rows.slice(0, 1000);
-  const stBtn = (d,k) => { const D = ST_DEF[k]; if(k==='ins' && d.product!=='리스') return '<span class="eq">-</span>'; const on = !!d[D.on]; return `<button class="st ${on?'on':'off'}" onclick="toggleStatus(${d.id},'${k}')" title="${on?'클릭 시 완료 취소':'클릭 시 오늘 날짜로 완료'}">${on?`✓ ${md(d[D.at])}`:D.off}</button>`; };
+  const IMG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5L5 20"/></svg>';
+  const stBtn = (d,k) => {
+    const D = ST_DEF[k]; if(k==='ins' && d.product!=='리스') return '<span class="eq">-</span>';
+    const p = S.pendSt[d.id], chg = !!p && k in p, on = chg ? p[k] : !!d[D.on];
+    return `<button class="st ${on?'on':'off'} ${chg?'chg':''}" onclick="toggleStatus(${d.id},'${k}')" title="${D.name} ${D.onLb}/${D.off} 선택 후 [저장]">${on ? `✓ ${D.onLb}${chg?'':' '+md(d[D.at])}` : D.off}</button>`;
+  };
   $('#lTable').innerHTML = `<table>
-    <thead><tr><th>확정일</th><th>확정딜번호</th><th>고객명</th><th>연락처</th><th>상품</th><th>차종</th><th>구분</th><th>GA 업체</th><th>담당</th><th>탁송</th><th class="n">취득원가</th>
-      ${adm?'<th class="n inc-col">총인센</th><th class="n inc-col">지급인센</th><th class="n inc-col">법인수익</th>':''}<th class="c">자료</th><th class="c">인도</th><th class="c">정산</th><th class="c">보험증명서</th><th class="c">관리</th></tr></thead>
-    <tbody>${shown.map(d=>{ const i = S.inc[d.id]; return `<tr>
-      <td>${d.confirm_date}</td><td><b>${esc(d.deal_no)}</b></td><td><b>${esc(d.customer_name)}</b></td><td>${esc(d.phone||'')}</td>
+    <thead><tr><th>확정일</th><th>확정딜번호</th><th>고객명</th><th class="c">자료</th><th>연락처</th><th>상품</th><th>차종</th><th>구분</th><th>GA 업체</th><th>담당</th><th>탁송</th><th class="n">취득원가</th>
+      ${adm?'<th class="n inc-col">총인센</th><th class="n inc-col">지급인센</th><th class="n inc-col">법인수익</th>':''}<th class="c pin c1">인도</th><th class="c pin c2">정산</th><th class="c pin c3">보험증명서<br>(리스)</th><th class="c pin c4">상태 저장 · 관리</th></tr></thead>
+    <tbody>${shown.map(d=>{ const i = S.inc[d.id]; const pend = !!S.pendSt[d.id]; return `<tr class="${pend?'pend':''}">
+      <td>${d.confirm_date}</td><td><b>${esc(d.deal_no)}</b></td><td><b>${esc(d.customer_name)}</b></td>
+      <td class="c">${S.attCount[d.id]?`<button class="btn s att imgbtn" onclick="openViewer(${d.id})" title="저장된 자료 ${S.attCount[d.id]}개 보기 (← → 로 넘기기)">${IMG}<b>${S.attCount[d.id]}</b></button>`:`<span class="imgbtn none" title="저장된 자료 없음">${IMG}<b>0</b></span>`}</td>
+      <td>${esc(d.phone||'')}</td>
       <td>${d.product?`<span class="tag ${d.product==='리스'?'k':'b'}">${d.product}</span>`:'<span class="eq">-</span>'}</td><td>${esc(d.car_model||'')}</td>
       <td>${d.channel==='직영업'?'<span class="tag k">직영업</span>':'<span class="tag b">GA</span>'}</td><td>${esc(d.channel==='직영업'?'-':gaName(d.ga_id)||'-')}</td><td>${esc(staffName(d.staff_id)||'-')}</td>
       <td>${esc((d.delivery_region||'').replace(/특별자치시|특별자치도|특별시|광역시/,''))}</td><td class="n">${fmt(d.acq_cost)}</td>
       ${adm?`<td class="n inc-col" title="${i?.total_pct??''}%">${i?.total_pct!=null?fmt(incAmt(d,'total_pct')):'<span class="eq">미입력</span>'}</td><td class="n inc-col" title="${i?.pay_pct??''}%">${i?.pay_pct!=null?fmt(incAmt(d,'pay_pct')):'-'}</td><td class="n inc-col" title="${i?.corp_pct??''}%">${i?.corp_pct!=null?fmt(incAmt(d,'corp_pct')):'-'}</td>`:''}
-      <td class="c">${S.attCount[d.id]?`<button class="btn s att" onclick="openViewer(${d.id})">자료 ${S.attCount[d.id]}</button>`:'<span class="tag o">없음</span>'}</td>
-      <td class="c">${stBtn(d,'dlv')}</td><td class="c">${stBtn(d,'stl')}</td><td class="c">${stBtn(d,'ins')}</td>
-      <td class="c"><div class="acts"><button class="btn s" onclick="editDeal(${d.id})">수정</button>${adm?`<button class="btn s r" onclick="delDeal(${d.id})">삭제</button>`:''}</div></td></tr>`; }).join('')}</tbody>
-    <tfoot><tr><td colspan="10">합계 ${rows.length.toLocaleString()}건</td><td class="n">${fmt(sAcq)}</td>${adm?`<td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'total_pct'),0))}</td><td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'pay_pct'),0))}</td><td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'corp_pct'),0))}</td>`:''}<td colspan="5"></td></tr></tfoot></table>`;
-  $('#lNote').textContent = rows.length>1000 ? '※ 화면에는 최근 1,000건만 표시됩니다. 전체는 [목록 엑셀]로 확인하세요.' : '';
+      <td class="c pin c1">${stBtn(d,'dlv')}</td><td class="c pin c2">${stBtn(d,'stl')}</td><td class="c pin c3">${stBtn(d,'ins')}</td>
+      <td class="c pin c4"><div class="acts"><button class="btn s ${pend?'p':''}" onclick="saveStatus(${d.id})" ${pend?'':'disabled'}>저장</button><button class="btn s" onclick="editDeal(${d.id})">수정</button>${adm?`<button class="btn s r" onclick="delDeal(${d.id})">삭제</button>`:''}</div></td></tr>`; }).join('')}</tbody>
+    <tfoot><tr><td colspan="11">합계 ${rows.length.toLocaleString()}건</td><td class="n">${fmt(sAcq)}</td>${adm?`<td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'total_pct'),0))}</td><td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'pay_pct'),0))}</td><td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'corp_pct'),0))}</td>`:''}<td class="pin c1"></td><td class="pin c2"></td><td class="pin c3"></td><td class="pin c4"></td></tr></tfoot></table>`;
+  $('#lNote').textContent = '※ 인도·정산·보험증명서는 버튼으로 선택한 뒤 [저장]을 눌러야 반영됩니다. (완료일자는 저장한 날짜로 기록)' + (rows.length>1000 ? ' · 화면에는 최근 1,000건만 표시됩니다. 전체는 [목록 엑셀]로 확인하세요.' : '');
 }
-async function toggleStatus(id, k){
+function toggleStatus(id, k){   // 선택만 변경 (저장 전)
   const d = S.deals.find(x=>x.id===id); if(!d) return; const D = ST_DEF[k];
-  const on = !d[D.on];
-  if(!on && !confirm(`${D.lb==='회신'?'보험가입증명서 회신':D.lb} 완료(${d[D.at]||''})를 취소할까요?`)) return;
-  const patch = { [D.on]:on, [D.at]: on ? todayStr() : null };
+  const p = (S.pendSt[id] ??= {});
+  const nv = !(k in p ? p[k] : !!d[D.on]);
+  if(nv === !!d[D.on]) delete p[k]; else p[k] = nv;
+  if(!Object.keys(p).length) delete S.pendSt[id];
+  renderList();
+}
+async function saveStatus(id){
+  const d = S.deals.find(x=>x.id===id), p = S.pendSt[id]; if(!d || !p) return;
+  const patch = {}, msg = [];
+  Object.entries(p).forEach(([k,on]) => { const D = ST_DEF[k]; patch[D.on] = on; patch[D.at] = on ? todayStr() : null; msg.push(`${D.name} ${on?D.onLb:D.off}`); });
   loading(true);
-  try{ await DB.update('deals', id, patch); Object.assign(d, patch); toast(on ? `${D.lb==='회신'?'보험증명서 회신':D.lb} 완료 처리 (${todayStr()})` : '완료가 취소되었습니다.'); renderList(); }
+  try{ await DB.update('deals', id, patch); Object.assign(d, patch); delete S.pendSt[id]; toast(`저장되었습니다. (${msg.join(' · ')})`); renderList(); }
   catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
 }
 async function delDeal(id){
