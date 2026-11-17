@@ -38,6 +38,27 @@ a{color:inherit}
 .pwbtn{position:absolute;right:6px;top:5px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:4px;background:#fff;font:inherit;font-size:12px;font-weight:700;color:var(--gray);cursor:pointer}
 .pwbtn:hover{border-color:var(--ink);color:var(--ink)}
 .pwwarn{font-size:12px;font-weight:700;color:var(--orange);background:var(--orange-l);border:1px solid #fdba74;border-radius:4px;padding:7px 10px;line-height:1.5}
+.sw{position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--ink);user-select:none;white-space:nowrap}
+.sw input{position:absolute;opacity:0;width:0;height:0;margin:0;padding:0;border:0}
+.sw .tr{width:42px;height:22px;border-radius:11px;background:#d1d5db;position:relative;transition:.15s;flex:none}
+.sw .tr::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.sw input:checked + .tr{background:var(--blue)}
+.sw input:checked + .tr::after{left:23px}
+.sw input:disabled + .tr{opacity:.45;cursor:not-allowed}
+.sw .tx{min-width:34px;color:var(--gray)}
+.sw input:checked ~ .tx{color:var(--blue)}
+.modal.w{width:640px}
+.sform{border-top:1px solid var(--line)}
+.srow{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-l);min-height:58px}
+.srow .sl{font-size:13px;font-weight:700;color:var(--ink)}
+.srow .sv{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.srow .sv>input,.srow .sv>select{width:240px;max-width:100%}
+.srow .sv>input.wide{width:100%}
+.srow .sh{font-size:12px;color:var(--gray)}
+.srow .sh b{color:var(--blue)}
+.srow .pwwrap{width:240px;max-width:100%}
+.srow .pwwrap input{width:100%}
+.idbox{font-size:17px;font-weight:800;color:var(--blue);letter-spacing:.04em}
 .auth-msg{margin-top:14px;font-size:13px;color:var(--red);min-height:18px;text-align:center;font-weight:600}
 .block{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#140405;padding:20px}
 .block-box{width:520px;max-width:100%;background:#fff;border-top:6px solid var(--red);border-radius:6px;padding:40px 36px;text-align:center}
@@ -385,15 +406,14 @@ tr.warn td{background:var(--orange-l)!important}
   <div class="auth-box">
     <div class="brand">로드온 모빌리티</div>
     <h2 id="authTitle">GA 확정리스트</h2>
-    <div class="f">이메일<input id="aEmail" type="email" placeholder="name@company.com" autocomplete="username"></div>
+    <div class="f">아이디<input id="aId" placeholder="예) R001" autocomplete="username" autocapitalize="characters" spellcheck="false" maxlength="10" style="text-transform:uppercase"></div>
     <div class="f">비밀번호
-      <div class="pwwrap"><input id="aPw" type="password" placeholder="6자 이상 · 대소문자 구분" autocomplete="current-password"><button type="button" class="pwbtn" id="aPwShow" tabindex="-1">보기</button></div>
+      <div class="pwwrap"><input id="aPw" type="password" placeholder="대소문자 구분 · 첫 로그인은 아이디와 동일" autocomplete="current-password"><button type="button" class="pwbtn" id="aPwShow" tabindex="-1">보기</button></div>
       <div class="pwwarn hidden" id="aPwWarn"></div>
     </div>
     <button class="btn p" id="aSubmit">로그인</button>
     <div class="auth-msg" id="aMsg"></div>
-    <div class="auth-sw" id="aSwitch">처음 이용하시나요? <a onclick="toggleAuth()">최초 가입</a></div>
-    <div class="auth-sw" style="margin-top:8px;font-size:12px">대외비 · 관리자가 등록한 이메일만 이용 가능 · 접속 IP 기록</div>
+    <div class="auth-sw" style="font-size:12px">대외비 · 관리자가 등록한 아이디만 이용 가능 · 접속 IP 기록<br>아이디·비밀번호 분실 시 관리자에게 문의하세요</div>
   </div>
 </div>
 
@@ -426,9 +446,9 @@ tr.warn td{background:var(--orange-l)!important}
       <a data-p="report"><span class="ic">↓</span>리포트 · 내보내기</a>
       <a data-p="settings"><span class="ic">⚙</span>업체 · 설정</a>
       <div class="nav-sep admin-only"></div>
-      <a data-p="admin" class="admin-only"><span class="ic">◆</span>회원 · 접속기록<span class="bdg hidden" id="navDanger"></span></a>
+      <a data-p="admin" class="admin-only"><span class="ic">◆</span>직원관리 · 접속기록<span class="bdg hidden" id="navDanger"></span></a>
     </nav>
-    <div class="me"><b id="meName">-</b><span id="meRole">-</span><button class="btn s" onclick="logout()">로그아웃</button></div>
+    <div class="me"><b id="meName">-</b><span id="meRole">-</span><button class="btn s" onclick="openPwChange(false)">비밀번호 변경</button><button class="btn s" style="margin-top:6px" onclick="logout()">로그아웃</button></div>
   </aside>
 
   <main class="main">
@@ -661,20 +681,24 @@ tr.warn td{background:var(--orange-l)!important}
 
       <!-- ===== 회원 · 접속기록 ===== -->
       <section id="p-admin" class="hidden">
-        <div class="tabs"><button data-t="members" class="on" onclick="setAdminTab('members')">회원 관리</button><button data-t="logs" onclick="setAdminTab('logs')">접속 기록<span class="bdg hidden" id="tabDanger"></span></button></div>
+        <div class="tabs"><button data-t="members" class="on" onclick="setAdminTab('members')">직원 관리</button><button data-t="logs" onclick="setAdminTab('logs')">접속 기록<span class="bdg hidden" id="tabDanger"></span></button></div>
 
         <div id="t-members">
           <div class="card">
-            <h3>회원 · 직원 등록 <small>이메일+권한 등록 시 해당 이메일로 가입·접속 가능 · '접속불가'는 담당직원 명단에만 표시</small></h3>
-            <div class="fg" style="grid-template-columns:1fr 1.6fr 180px auto;align-items:end">
-              <label class="f"><span class="req">이름</span><input id="mbName" placeholder="홍길동"></label>
-              <label class="f">이메일<input id="mbEmail" type="email" placeholder="접속 권한 부여 시 필수"></label>
-              <label class="f">권한<select id="mbRole"><option value="user">사용자</option><option value="admin">관리자</option><option value="none">접속불가 (담당자 명단만)</option></select></label>
-              <button class="btn p" onclick="addMember()">등록</button>
+            <div class="toolbar">
+              <label class="f">상세검색<select id="mbField"><option value="name">이름</option><option value="login_id">아이디</option><option value="phone">연락처</option><option value="contact_email">이메일</option></select></label>
+              <label class="f" style="min-width:220px">검색어<input id="mbQ" placeholder="검색어 입력"></label>
+              <label class="f">권한<select id="mbRoleF"><option value="all">전체</option><option value="admin">관리자</option><option value="user">직원</option></select></label>
+              <label class="f">사용여부<select id="mbUseF"><option value="all">전체</option><option value="on">사용중</option><option value="off">중지</option></select></label>
+              <label class="f">재직<select id="mbActF"><option value="all">전체</option><option value="on">재직</option><option value="off">퇴사</option></select></label>
+              <button class="btn k" onclick="renderMembers()">조회</button>
+              <div class="sp"></div>
+              <button class="btn p" onclick="openStaffForm()">＋ 직원 등록</button>
             </div>
+            <h3 style="margin-bottom:10px"><span>TOTAL <span id="mbTotal" style="color:var(--blue)">0</span></span><small id="mbCount"></small></h3>
+            <div class="tw" id="mbTable"></div>
+            <p class="note">· 아이디는 R000부터 등록 순서대로 자동 부여 (삭제된 번호는 다시 쓰지 않음) · 사용여부 Off = 즉시 로그아웃·로그인 불가 (담당자 명단에는 유지) · 퇴사 처리 = 로그인 불가 + 담당자 선택 목록에서 제외<br>· 본인 계정의 권한·사용여부·재직상태는 변경할 수 없습니다. · 초기 비밀번호 = 아이디 (첫 로그인 시 본인 변경 필수) · 비밀번호 분실 시 [수정] → [비밀번호 초기화]</p>
           </div>
-          <div class="card"><h3>회원 · 직원 명단 <small id="mbCount"></small></h3><div class="tw" id="mbTable"></div>
-            <p class="note">· 권한 변경·삭제·퇴사 처리 시 즉시 접속 차단됩니다. · 본인 계정 및 마지막 관리자는 삭제·강등할 수 없습니다.</p></div>
         </div>
 
         <div id="t-logs" class="hidden">
@@ -692,11 +716,11 @@ tr.warn td{background:var(--orange-l)!important}
               <label class="f">시작일<input type="date" id="logFrom"></label>
               <label class="f">종료일<input type="date" id="logTo"></label>
               <label class="f">구분<select id="logSev"><option value="all">전체</option><option value="danger">비정상(위험)만</option><option value="warn">주의만</option><option value="normal">정상만</option></select></label>
-              <label class="f">검색<input id="logQ" placeholder="이메일·IP"></label>
+              <label class="f">검색<input id="logQ" placeholder="아이디·IP"></label>
               <button class="btn k" onclick="renderLogs()">조회</button>
             </div>
             <div class="tw" id="logTable"></div>
-            <p class="note">· <b style="color:var(--red)">빨간색</b> = 비정상 접근 (로그인 실패, 미등록 이메일 가입 시도, 권한 없는 계정 접속, 차단 IP 접속, 권한 외 기능 시도) · <b style="color:var(--orange)">주황색</b> = 처음 접속한 IP · 로그인 10분 내 5회 실패 시 IP 자동 차단</p>
+            <p class="note">· <b style="color:var(--red)">빨간색</b> = 비정상 접근 (로그인 실패, 미등록 이메일 가입 시도, 권한 없는 계정 접속, 차단 IP 접속, 권한 외 기능 시도) · <b style="color:var(--orange)">주황색</b> = 처음 접속한 IP · 사용 중지 아이디 로그인 시도는 '권한 없는 계정 접속'으로 기록 · 로그인 10분 내 5회 실패 시 IP 자동 차단</p>
           </div>
         </div>
       </section>
@@ -745,7 +769,12 @@ const BUCKET = 'attachments';
 const IDLE_MIN = 60;   // 무입력 자동 로그아웃 (분)
 
 const SIDO = ['서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도','강원특별자치도','충청북도','충청남도','전북특별자치도','전라남도','경상북도','경상남도','제주특별자치도'];
-const ROLE_LABEL = { admin:'관리자', user:'사용자', none:'접속불가' };
+const ROLE_LABEL = { admin:'관리자', user:'직원' };
+const LOGIN_DOMAIN = 'hdlist.local';   // 아이디 R001 → 로그인 계정 r001@hdlist.local (내부용)
+const pad3 = n => String(n).padStart(3,'0');
+function normId(v){ v = String(v||'').trim().toUpperCase().replace(/\s/g,''); return /^\d{1,4}$/.test(v) ? 'R'+pad3(+v) : v; }
+const idToEmail = id => String(id||'').toLowerCase()+'@'+LOGIN_DOMAIN;
+const emailToId = em => em && String(em).endsWith('@'+LOGIN_DOMAIN) ? String(em).split('@')[0].toUpperCase() : (em||'');
 const EVENT_LABEL = { LOGIN:'로그인', LOGOUT:'로그아웃', SESSION:'자동 로그인', IDLE_LOGOUT:'장시간 미사용 로그아웃', LOGIN_FAIL:'로그인 실패', SIGNUP_BLOCKED:'미등록 이메일 가입 시도', NO_PERMISSION:'권한 없는 계정 접속', BLOCKED_IP:'차단 IP 접속 시도', DENIED:'권한 외 기능 시도' };
 const METRIC_LABEL = { count:'건수', acq:'취득원가', total:'총인센', pay:'지급인센', corp:'법인수익인센', net:'법인순이익' };
 const PALETTE = ['#1d4ed8','#0b0b0c','#60a5fa','#6b7280','#1e3a8a','#93c5fd','#9ca3af','#3b82f6'];
@@ -788,7 +817,16 @@ function loading(on, txt){ $('#loading').textContent = txt || '처리중...'; $(
 function errMsg(e){ return e?.message || String(e); }
 function mapErr(e){
   const m = errMsg(e);
-  if(/LAST_ADMIN/.test(m)) return new Error('마지막 관리자는 삭제·변경할 수 없습니다.');
+  if(/LAST_ADMIN/.test(m)) return new Error('마지막 관리자는 삭제·강등·중지·퇴사 처리할 수 없습니다.');
+  if(/SELF_LOCK/.test(m)) return new Error('본인 계정의 권한·사용여부·재직상태 변경과 삭제는 할 수 없습니다.');
+  if(/PASSWORD_SHORT/.test(m)) return new Error('비밀번호는 6자 이상 입력하세요.');
+  if(/OLD_PW_WRONG/.test(m)) return new Error('현재 비밀번호가 올바르지 않습니다.');
+  if(/PW_SAME_AS_ID/.test(m)) return new Error('아이디와 같은 비밀번호는 사용할 수 없습니다.');
+  if(/PW_SAME_AS_OLD/.test(m)) return new Error('현재 비밀번호와 다른 비밀번호를 입력하세요.');
+  if(/NAME_REQUIRED/.test(m)) return new Error('이름을 입력하세요.');
+  if(/INVALID_ROLE/.test(m)) return new Error('권한을 선택하세요.');
+  if(/NOT_FOUND/.test(m)) return new Error('대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.');
+  if(/function public\.staff_|Could not find the function/i.test(m)) return new Error('DB 업데이트(update_v6.sql)가 적용되지 않았습니다. 관리자에게 문의하세요.');
   if(/NOT_REGISTERED|Database error saving new user/i.test(m)) return new Error('NOT_REGISTERED');
   if(e?.code==='23505' || /duplicate key/i.test(m)){
     if(/deal_no/.test(m)) return new Error('이미 등록된 견적번호(딜)입니다.');
@@ -834,7 +872,7 @@ document.addEventListener('input', e => {
     let i = 0, c = 0; while(i < t.value.length && c < before){ if(/\d/.test(t.value[i])) c++; i++; }
     try{ t.setSelectionRange(i, i); }catch(err){}
   }
-  if(t.id==='fPhone') t.value = phoneFmt(t.value);
+  if(t.id==='fPhone' || t.id==='sPhone') t.value = phoneFmt(t.value);
   if(t.classList.contains('bad')) t.classList.remove('bad');
   if(t.closest && t.closest('#p-deal')) S.formDirty = true;
 });
@@ -849,7 +887,7 @@ const DemoFiles = {
   removeDeal(id){ this.of(id).forEach(a=>this.remove(a.id)); }
 };
 const Demo = {
-  key:'roadon_ga_demo_v6', d:null,
+  key:'roadon_ga_demo_v7', d:null,
   load(){ if(this.d) return this.d; try{ this.d = JSON.parse(localStorage.getItem(this.key)); }catch(e){} if(!this.d){ this.d = this.seed(); this.save(); } return this.d; },
   save(){ try{ localStorage.setItem(this.key, JSON.stringify(this.d)); }catch(e){} },
   nextId(t){ const d = this.load(); d.seq[t] = (d.seq[t]||0)+1; return d.seq[t]; },
@@ -857,11 +895,11 @@ const Demo = {
     let sd = 20261116; const R = () => { sd = (sd*16807) % 2147483647; return sd/2147483647; }; const pick = a => a[Math.floor(R()*a.length)];
     const now = new Date().toISOString(), today = todayStr(), end = curYm();
     const staff = [
-      { id:1, name:'데모 관리자', email:'demo@local', role:'admin', active:true },
-      { id:2, name:'이관리', email:'lee@roadon.test', role:'user', active:true },
-      { id:3, name:'김영업', email:null, role:'none', active:true },
-      { id:4, name:'박직영', email:null, role:'none', active:true }
-    ].map(x=>({ ...x, created_at:now }));
+      { id:1, login_id:'R000', name:'데모 관리자', role:'admin', active:true, can_login:true, must_change_pw:false, phone:'010-0000-0000', contact_email:null, address:null, pw:'Demo1234' },
+      { id:2, login_id:'R001', name:'이관리', role:'user', active:true, can_login:true, must_change_pw:false, phone:'010-1234-5678', contact_email:'lee@roadon.test', address:'경기도 성남시', pw:'Lee12345' },
+      { id:3, login_id:'R002', name:'김영업', role:'user', active:true, can_login:false, must_change_pw:true, phone:'010-2222-3333', contact_email:null, address:null, pw:'R002' },
+      { id:4, login_id:'R003', name:'박직영', role:'user', active:true, can_login:true, must_change_pw:true, phone:'010-4444-5555', contact_email:null, address:null, pw:'R003' }
+    ].map(x=>({ ...x, email:idToEmail(x.login_id), created_at:now }));
     const capitals = [{ id:1, name:'현대캐피탈', active:true, created_at:now }];
     const ga_partners = ['GA알파','GA베타','GA감마','GA델타','GA엡실론'].map((n,i)=>({ id:i+1, name:n, active:true, memo:'', created_at:now }));
     const models = ['그랜저','쏘나타','아반떼','투싼','싼타페','팰리세이드','스타리아','아이오닉5','G80','GV70'];
@@ -886,7 +924,7 @@ const Demo = {
             capital_id:1, product:prod, car_model:pick(models), contract_no:'C'+(7000000+id), vin, acq_cost:(2500+Math.floor(R()*5500))*10000,
             channel:u.ch, ga_id:u.ga, staff_id:u.ch==='GA' ? pick([2,3]) : 4, delivery_region:pick(SIDO), delivery_detail:'', accessories:pick(['블랙박스+썬팅','썬팅','PPF 전면','없음','블랙박스']),
             memo:'', delivered:dlv, delivered_at:dlvAt, settled:stl, settled_at: stl ? [addDays(dlvAt, 10), today].sort()[0] : null,
-            ins_ok:ins, ins_at: ins ? [addDays(dlvAt, 3), today].sort()[0] : null, created_by_email:'demo@local', created_at:cd+'T09:00:00' });
+            ins_ok:ins, ins_at: ins ? [addDays(dlvAt, 3), today].sort()[0] : null, created_by_email:'r000@hdlist.local', created_at:cd+'T09:00:00' });
           const tp = Math.round((3+R()*4)*10)/10, pp = Math.round(tp*(0.5+R()*0.2)*10)/10;
           const sl = R()<0.3 ? 0.3 : 0, ap = R()<0.08;
           incs.push({ deal_id:id, settle_method: id%4===0 ? '3.3% 공제' : '계산서 발행', total_pct:tp, pay_pct:pp, corp_pct:Math.round((tp-pp)*10)/10, promo_name:'공통 프로모션', promo_pct:0.5, promo_amt:null, sliding_name: sl ? '월 6~10대 구간' : null, sliding_pct: sl || null, sliding_amt:null,
@@ -897,10 +935,10 @@ const Demo = {
     });
     const ago = h => new Date(Date.now()-h*36e5).toISOString();
     const access_logs = [
-      { id:1, at:ago(50), event:'LOGIN', severity:'normal', email:'demo@local', ip:'127.0.0.1', ua:'Mozilla/5.0 (Windows NT 10.0) Chrome/130', detail:'' },
-      { id:2, at:ago(30), event:'LOGIN', severity:'warn', email:'lee@roadon.test', ip:'211.36.140.22', ua:'Mozilla/5.0 (iPhone) Safari/604', detail:'처음 접속한 IP' },
-      { id:3, at:ago(6), event:'SIGNUP_BLOCKED', severity:'danger', email:'outsider@gmail.com', ip:'198.51.100.7', ua:'Mozilla/5.0 (Windows NT 10.0) Chrome/130', detail:'미등록 이메일 가입 시도' },
-      ...[1,2,3,4,5].map(i=>({ id:3+i, at:ago(3-i*0.05), event:'LOGIN_FAIL', severity:'danger', email:'admin@roadon.test', ip:'203.0.113.45', ua:'python-requests/2.31', detail:'비밀번호 오류 또는 미가입' })),
+      { id:1, at:ago(50), event:'LOGIN', severity:'normal', email:'r000@hdlist.local', ip:'127.0.0.1', ua:'Mozilla/5.0 (Windows NT 10.0) Chrome/130', detail:'' },
+      { id:2, at:ago(30), event:'LOGIN', severity:'warn', email:'r001@hdlist.local', ip:'211.36.140.22', ua:'Mozilla/5.0 (iPhone) Safari/604', detail:'처음 접속한 IP' },
+      { id:3, at:ago(6), event:'NO_PERMISSION', severity:'danger', email:'r002@hdlist.local', ip:'198.51.100.7', ua:'Mozilla/5.0 (Windows NT 10.0) Chrome/130', detail:'사용 중지 계정' },
+      ...[1,2,3,4,5].map(i=>({ id:3+i, at:ago(3-i*0.05), event:'LOGIN_FAIL', severity:'danger', email:'r009@hdlist.local', ip:'203.0.113.45', ua:'python-requests/2.31', detail:'비밀번호 오류 또는 미등록 아이디' })),
       { id:9, at:ago(1), event:'BLOCKED_IP', severity:'danger', email:null, ip:'203.0.113.45', ua:'python-requests/2.31', detail:'차단된 IP 접속 시도' }
     ];
     const ip_rules = [{ ip:'203.0.113.45', type:'block', reason:'로그인 5회 연속 실패 (자동 차단)', created_by:'system', created_at:ago(2.7) }];
@@ -913,7 +951,7 @@ const Demo = {
         { id:5, ga_id:null, kind:'sliding', name:'월 11대 이상 구간', month:null, pct:0.5, amt:null, active:true }
       ],
       app_settings:[{ key:'dash', value:{ cmp_prev:true, cmp_yoy:true } }], access_logs, ip_rules,
-      seq:{ staff:4, capitals:1, ga_partners:5, deals:id, access_logs:9, promo_items:5 } };
+      seq:{ staff:4, login:4, capitals:1, ga_partners:5, deals:id, access_logs:9, promo_items:5 } };
   }
 };
 
@@ -1014,59 +1052,86 @@ function showBlock(reason, email){
 }
 
 /* ---------------- AUTH ---------------- */
-let signupMode = false;
 function show(view){ ['vLogin','vBlock','vApp'].forEach(v => $('#'+v).classList.toggle('hidden', v!==view)); }
-function toggleAuth(){
-  signupMode = !signupMode;
-  $('#authTitle').textContent = signupMode ? '최초 가입' : 'GA 확정리스트';
-  $('#aSubmit').textContent = signupMode ? '가입' : '로그인';
-  $('#aSwitch').innerHTML = signupMode ? '이미 계정이 있나요? <a onclick="toggleAuth()">로그인</a>' : '처음 이용하시나요? <a onclick="toggleAuth()">최초 가입</a>';
-  $('#aMsg').textContent = '';
-}
 async function submitAuth(){
-  const email = $('#aEmail').value.trim().toLowerCase(), pw = $('#aPw').value;
-  if(!email || !pw){ $('#aMsg').textContent = '이메일과 비밀번호를 입력하세요.'; return; }
-  if(pw.length < 6){ $('#aMsg').textContent = '비밀번호는 6자 이상입니다.'; return; }
+  const id = normId($('#aId').value), pw = $('#aPw').value;
+  $('#aId').value = id;
+  $('#aMsg').style.color = 'var(--red)';
+  if(!id || !pw){ $('#aMsg').textContent = '아이디와 비밀번호를 입력하세요.'; return; }
+  if(!/^R\d{3,}$/.test(id)){ $('#aMsg').textContent = '아이디 형식을 확인하세요. 예) R001'; return; }
+  const email = idToEmail(id);
   loading(true);
   try{
-    if(signupMode){
-      const { data, error } = await sb.auth.signUp({ email, password:pw });
-      if(error){
-        if(mapErr(error).message === 'NOT_REGISTERED'){ await SEC.log('SIGNUP_BLOCKED', email, '미등록 이메일 가입 시도'); return showBlock('등록되지 않은 이메일입니다. 관리자에게 등록을 요청하세요.', email); }
-        throw error;
+    const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
+    if(error){
+      if(/banned/i.test(error.message)){   // 사용여부 Off · 퇴사 계정
+        await SEC.log('NO_PERMISSION', email, '사용 중지 계정 로그인 시도');
+        $('#aMsg').textContent = '사용이 중지된 아이디입니다. 관리자에게 문의하세요.'; return;
       }
-      if(!data.session){ toggleAuth(); $('#aMsg').style.color='var(--blue)'; $('#aMsg').textContent = '가입 완료. 이메일 인증 후 로그인하세요.'; return; }
-      S.user = data.user; await SEC.log('LOGIN', email, '최초 가입'); await loadMe();
-    }else{
-      const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
-      if(error){
-        const r = await SEC.log('LOGIN_FAIL', email, /confirm/i.test(error.message) ? '이메일 미인증' : '비밀번호 오류 또는 미가입');
-        if(r.blocked) return showBlock('로그인 연속 실패로 이 IP의 접속이 차단되었습니다.', email);
-        $('#aMsg').style.color='var(--red)';
-        $('#aMsg').textContent = /confirm/i.test(error.message) ? '이메일 인증이 완료되지 않았습니다.' : `이메일 또는 비밀번호가 올바르지 않습니다.${r.fails?` (${r.fails}/5회 · 5회 실패 시 차단)`:''}`;
-        return;
-      }
-      S.user = data.user; sessionStorage.setItem('ga_logged','1');
-      await SEC.log('LOGIN', email, ''); await loadMe();
+      const r = await SEC.log('LOGIN_FAIL', email, '비밀번호 오류 또는 미등록 아이디');
+      if(r.blocked) return showBlock('로그인 연속 실패로 이 IP의 접속이 차단되었습니다.', id);
+      $('#aMsg').textContent = `아이디 또는 비밀번호가 올바르지 않습니다.${r.fails?` (${r.fails}/5회 · 5회 실패 시 차단)`:''}`;
+      return;
     }
-  }catch(e){ $('#aMsg').style.color='var(--red)'; $('#aMsg').textContent = errMsg(e); }
+    S.user = data.user; S.loginPw = pw; sessionStorage.setItem('ga_logged','1');
+    $('#aPw').value = '';
+    await SEC.log('LOGIN', email, ''); await loadMe();
+  }catch(e){ $('#aMsg').textContent = errMsg(e); }
   finally{ loading(false); }
 }
 async function loadMe(){
   const email = (S.user?.email||'').toLowerCase();
   const { data, error } = await sb.from('staff').select('*').eq('email', email).maybeSingle();
-  if(error || !data || !['admin','user'].includes(data.role) || !data.active){
-    await SEC.log('NO_PERMISSION', email, error ? errMsg(error).slice(0,100) : (data ? (data.active ? '접속불가 권한' : '퇴사(비활성) 계정') : '권한 해제된 계정'));
-    return showBlock('접근 권한이 없는 계정입니다.', email);
+  if(error || !data || !['admin','user'].includes(data.role) || !data.active || data.can_login===false){
+    await SEC.log('NO_PERMISSION', email, error ? errMsg(error).slice(0,100) : (data ? (!data.active ? '퇴사 처리 계정' : data.can_login===false ? '사용 중지 계정' : '권한 없음') : '사용 중지 또는 삭제된 계정'));
+    return showBlock('로그인이 허용되지 않은 아이디입니다. 관리자에게 문의하세요.', emailToId(email));
   }
   S.me = data;
   await enterApp();
 }
 async function logout(){
   if(DEMO){ toast('DEMO 모드에서는 로그아웃이 없습니다.'); return; }
+  $('#modalRoot').innerHTML = '';
   await SEC.log('LOGOUT', S.me?.email, '');
-  sessionStorage.removeItem('ga_logged');
+  sessionStorage.removeItem('ga_logged'); S.loginPw = null;
   await sb.auth.signOut(); S.user=null; S.me=null; show('vLogin');
+}
+/* 비밀번호 변경 : 첫 로그인(초기 비밀번호 = 아이디) 시 필수 · 사이드바에서 직접 변경 */
+function openPwChange(forced){
+  if(!S.me) return;
+  const knowOld = forced && !!S.loginPw;
+  $('#modalRoot').innerHTML = `<div class="modal-bg"><div class="modal"><h4>${forced ? '비밀번호 변경 (필수)' : '비밀번호 변경'}</h4>
+    ${forced ? `<p class="pwwarn" style="margin:-6px 0 16px">처음 로그인하셨습니다. 앞으로 사용할 비밀번호를 설정하세요.<br>변경 후에는 새 비밀번호로만 로그인됩니다.</p>` : ''}
+    <div class="f">아이디<input value="${esc(S.me.login_id||'')}" disabled></div>
+    <div class="f ${knowOld?'hidden':''}">현재 비밀번호<input id="cpOld" type="password" autocomplete="current-password" value="${knowOld?esc(S.loginPw):''}"></div>
+    <div class="f">새 비밀번호<div class="pwwrap"><input id="cpNew" type="password" autocomplete="new-password" placeholder="6자 이상 · 아이디와 다르게 · 대소문자 구분"><button type="button" class="pwbtn" id="cpShow" tabindex="-1">보기</button></div></div>
+    <div class="f">새 비밀번호 확인<input id="cpNew2" type="password" autocomplete="new-password"></div>
+    <div class="pwwarn hidden" id="cpWarn"></div>
+    <div class="mb">${forced ? '<button class="btn" onclick="logout()">로그아웃</button>' : `<button class="btn" onclick="$('#modalRoot').innerHTML=''">취소</button>`}<button class="btn p" id="cpSave">변경</button></div></div></div>`;
+  $('#cpShow').onmousedown = e => e.preventDefault();
+  $('#cpShow').onclick = () => { const on = $('#cpNew').type==='password'; ['#cpNew','#cpNew2'].forEach(x => $(x).type = on ? 'text' : 'password'); $('#cpShow').textContent = on ? '숨김' : '보기'; };
+  const warn = () => { const h = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test($('#cpNew').value + $('#cpNew2').value); $('#cpWarn').textContent = h ? '⚠ 한글이 입력되었습니다. 한/영 키를 눌러 영문으로 입력하세요.' : ''; $('#cpWarn').classList.toggle('hidden', !h); };
+  ['#cpNew','#cpNew2'].forEach(x => $(x).addEventListener('input', warn));
+  ['#cpOld','#cpNew','#cpNew2'].forEach(x => $(x).addEventListener('keydown', e => { if(e.key==='Enter') $('#cpSave').click(); }));
+  $('#cpSave').onclick = async () => {
+    const o = $('#cpOld').value, n = $('#cpNew').value, n2 = $('#cpNew2').value;
+    if(!o) return toast('현재 비밀번호를 입력하세요.', 1);
+    if(n.length < 6) return toast('새 비밀번호는 6자 이상 입력하세요.', 1);
+    if(/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(n)) return toast('비밀번호에 한글은 사용할 수 없습니다.', 1);
+    if(n.toUpperCase() === String(S.me.login_id||'').toUpperCase()) return toast('아이디와 같은 비밀번호는 사용할 수 없습니다.', 1);
+    if(n === o) return toast('현재 비밀번호와 다른 비밀번호를 입력하세요.', 1);
+    if(n !== n2) return toast('새 비밀번호 확인이 일치하지 않습니다.', 1);
+    loading(true);
+    try{
+      await STAFF.changeMine(o, n);
+      S.me.must_change_pw = false; S.loginPw = null;
+      const mine = S.staff.find(x => x.id===S.me.id); if(mine) mine.must_change_pw = false;
+      $('#modalRoot').innerHTML = '';
+      toast('비밀번호가 변경되었습니다. 다음 로그인부터 새 비밀번호를 사용하세요.');
+      if(S.page==='admin' && S.adminTab==='members') renderMembers();
+    }catch(e){ toast(errMsg(e), 1); } finally{ loading(false); }
+  };
+  setTimeout(() => (knowOld ? $('#cpNew') : $('#cpOld')).focus(), 30);
 }
 /* 무입력 자동 로그아웃 */
 let idleT;
@@ -1084,8 +1149,8 @@ function resetIdle(){
 /* ---------------- APP ---------------- */
 async function enterApp(){
   show('vApp');
-  $('#meName').textContent = S.me.name || S.me.email;
-  $('#meRole').textContent = ROLE_LABEL[S.me.role] + (S.me.email ? ' · '+S.me.email : '');
+  $('#meName').textContent = S.me.name || S.me.login_id;
+  $('#meRole').textContent = (ROLE_LABEL[S.me.role]||'') + (S.me.login_id ? ' · '+S.me.login_id : '');
   $('#demoBadge').classList.toggle('hidden', !DEMO);
   $('#topIp').textContent = S.ip ? 'IP '+S.ip : '';
   $('#topDate').textContent = todayStr().replace(/-/g,'.');
@@ -1102,6 +1167,7 @@ async function enterApp(){
   initDealForm();
   resetIdle();
   go(S.page);
+  if(S.me.must_change_pw) openPwChange(true);   // 초기 비밀번호(= 아이디) 사용 중 → 변경 필수
 }
 async function loadAll(){
   const tasks = [DB.list('staff'), DB.list('capitals'), DB.list('ga_partners'), DB.list('deals'), DB.list('app_settings'),
@@ -1133,7 +1199,8 @@ async function loadDangerCount(){
 const gaName = id => S.ga.find(g=>g.id===id)?.name || '';
 const staffName = id => S.staff.find(s=>s.id===id)?.name || '';
 const capName = id => S.caps.find(c=>c.id===id)?.name || '';
-const staffByEmail = em => S.staff.find(s=>s.email && s.email===em)?.name || em || '';
+const staffByEmail = em => S.staff.find(s=>s.email && s.email===em)?.name || emailToId(em) || '';
+function logWho(em){ if(!em) return '-'; const st = S.staff.find(x => x.email===em); const id = emailToId(em); return st ? `${id} · ${st.name}` : id; }
 function grpKey(d){ return d.channel==='직영업' ? 'D' : (d.ga_id ? 'G'+d.ga_id : 'G0'); }
 function grpLabel(k){ return k==='D' ? '직영업' : k==='G0' ? '(GA 미지정)' : (gaName(+k.slice(1)) || '(삭제된 GA)'); }
 function incAmt(d, k){ const i = S.inc[d.id]; if(!i || i[k]==null || i[k]==='') return 0; return Math.round(num(d.acq_cost)*Number(i[k])/100); }
@@ -1193,7 +1260,7 @@ function staffOptions(sel){
   return '<option value="">선택 안 함</option>' + list.map(s=>`<option value="${s.id}" ${s.id===sel?'selected':''}>${esc(s.name)}${s.active?'':' (퇴사)'}</option>`).join('');
 }
 
-const TITLES = { dash:'대시보드', deal:'확정 등록', list:'확정 리스트', report:'리포트 · 내보내기', settings:'업체 · 설정', admin:'회원 · 접속기록' };
+const TITLES = { dash:'대시보드', deal:'확정 등록', list:'확정 리스트', report:'리포트 · 내보내기', settings:'업체 · 설정', admin:'직원관리 · 접속기록' };
 function go(p, opt={}){
   if(p==='admin' && !isAdmin()){ SEC.log('DENIED', null, '관리자 메뉴 접근 시도'); p = 'dash'; }
   if(!opt.back && p!==S.page){ S.hist.push({ p:S.page, y:window.scrollY }); if(S.hist.length>30) S.hist.shift(); }
@@ -2112,6 +2179,55 @@ function setAdminTab(t){
   if(t==='logs') renderLogs(); else renderMembers();
 }
 async function renderAdmin(){ if(!isAdmin()) return; setAdminTab(S.adminTab); }
+/* 직원 관리 API (실제 DB = 관리자 전용 함수 / DEMO = 브라우저 저장) */
+const STAFF = {
+  async nextId(){
+    if(DEMO) return 'R' + pad3(Demo.load().seq.login || 0);
+    const { data, error } = await sb.rpc('staff_next_id'); if(error) throw mapErr(error); return data;
+  },
+  async create(p){
+    if(DEMO){
+      const d = Demo.load(), login_id = 'R' + pad3(d.seq.login || 0); d.seq.login = (d.seq.login || 0) + 1;
+      const r = { id:Demo.nextId('staff'), login_id, email:idToEmail(login_id), name:p.name, phone:p.phone||null, contact_email:p.email||null, address:p.address||null, role:p.role, can_login:p.can_login, active:true, must_change_pw:true, pw:login_id, created_at:new Date().toISOString() };
+      d.staff.push(r); Demo.save(); return { id:r.id, login_id };
+    }
+    const { data, error } = await sb.rpc('staff_create', { p_name:p.name, p_phone:p.phone||null, p_role:p.role, p_email:p.email||null, p_address:p.address||null, p_can_login:p.can_login });
+    if(error) throw mapErr(error); return data;
+  },
+  async update(id, p){
+    if(DEMO){
+      const d = Demo.load(), r = d.staff.find(x=>x.id===id); if(!r) throw new Error('대상을 찾을 수 없습니다.');
+      if(r.email===S.me.email && (p.role!==r.role || !p.can_login || !p.active)) throw mapErr(new Error('SELF_LOCK'));
+      Object.assign(r, { name:p.name, phone:p.phone||null, contact_email:p.email||null, address:p.address||null, role:p.role, can_login:p.can_login, active:p.active }); Demo.save(); return;
+    }
+    const { error } = await sb.rpc('staff_update', { p_id:id, p_name:p.name, p_phone:p.phone||null, p_email:p.email||null, p_address:p.address||null, p_role:p.role, p_can_login:p.can_login, p_active:p.active });
+    if(error) throw mapErr(error);
+  },
+  async remove(id){
+    if(DEMO){ const d = Demo.load(); d.staff = d.staff.filter(x=>x.id!==id); d.deals.forEach(x=>{ if(x.staff_id===id) x.staff_id=null; }); Demo.save(); return; }
+    const { error } = await sb.rpc('staff_delete', { p_id:id }); if(error) throw mapErr(error);
+  },
+  async getPw(id){
+    if(DEMO) return Demo.load().staff.find(x=>x.id===id)?.pw || '';
+    const { data, error } = await sb.rpc('staff_get_password', { p_id:id }); if(error) throw mapErr(error); return data || '';
+  },
+  async resetPw(id){
+    if(DEMO){ const r = Demo.load().staff.find(x=>x.id===id); r.pw = r.login_id; r.must_change_pw = true; Demo.save(); return; }
+    const { error } = await sb.rpc('staff_reset_password', { p_id:id }); if(error) throw mapErr(error);
+  },
+  async changeMine(oldPw, newPw){
+    if(DEMO){
+      const r = Demo.load().staff.find(x=>x.id===S.me.id); if(!r) throw new Error('계정을 찾을 수 없습니다.');
+      if(r.pw !== oldPw) throw mapErr(new Error('OLD_PW_WRONG'));
+      r.pw = newPw; r.must_change_pw = false; Demo.save(); return;
+    }
+    const { error } = await sb.rpc('my_change_password', { p_old:oldPw, p_new:newPw }); if(error) throw mapErr(error);
+  }
+};
+const liveAdmin = x => x.role==='admin' && x.active && x.can_login!==false;
+const staffParams = m => ({ name:m.name, phone:m.phone||'', email:m.contact_email||'', address:m.address||'', role:m.role, can_login:m.can_login!==false, active:!!m.active });
+['#mbField','#mbRoleF','#mbUseF','#mbActF'].forEach(id => $(id).addEventListener('change', () => renderMembers()));
+$('#mbQ').addEventListener('keydown', e => { if(e.key==='Enter') renderMembers(); });
 async function renderMembers(){
   let last = {};
   try{
@@ -2119,72 +2235,120 @@ async function renderMembers(){
     const logs = DEMO ? Demo.load().access_logs : await fetchAll('access_logs','email,at,ip,event','at',false, q => q.in('event',['LOGIN','SESSION']).gte('at', since));
     logs.filter(l=>['LOGIN','SESSION'].includes(l.event)).forEach(l => { if(l.email && (!last[l.email] || last[l.email].at < l.at)) last[l.email] = l; });
   }catch(e){}
-  const list = S.staff;
-  $('#mbCount').textContent = `총 ${list.length}명 · 관리자 ${list.filter(m=>m.role==='admin'&&m.active).length} · 사용자 ${list.filter(m=>m.role==='user'&&m.active).length} · 접속불가 ${list.filter(m=>m.role==='none').length}`;
-  $('#mbTable').innerHTML = `<table><thead><tr><th>이름</th><th>이메일</th><th>권한</th><th class="c">상태</th><th>최근 접속</th><th>최근 접속 IP</th><th class="n">담당 건수</th><th class="c">관리</th></tr></thead>
-    <tbody>${list.map(m=>{ const me = m.email && m.email===S.me.email; const l = last[m.email]; return `<tr>
-      <td><b>${esc(m.name)}</b>${me?' <span class="tag k">나</span>':''}</td><td>${esc(m.email||'-')}</td>
-      <td><select data-id="${m.id}" class="roleSel" ${me?'disabled':''}>${Object.keys(ROLE_LABEL).map(r=>`<option value="${r}" ${r===m.role?'selected':''}>${ROLE_LABEL[r]}</option>`).join('')}</select></td>
+  const all = S.staff.slice().sort((a,b) => b.id - a.id);   // 최근 등록순
+  const f = $('#mbField').value, q = $('#mbQ').value.trim().toLowerCase(), qd = q.replace(/\D/g,'');
+  const rf = $('#mbRoleF').value, uf = $('#mbUseF').value, af = $('#mbActF').value;
+  const list = all.filter(m => {
+    if(rf!=='all' && m.role!==rf) return false;
+    if(uf!=='all' && (uf==='on') !== (m.can_login!==false)) return false;
+    if(af!=='all' && (af==='on') !== !!m.active) return false;
+    if(!q) return true;
+    const v = String(m[f]||'').toLowerCase();
+    return v.includes(q) || (f==='phone' && qd.length>=3 && v.replace(/\D/g,'').includes(qd));
+  });
+  $('#mbTotal').textContent = list.length.toLocaleString();
+  $('#mbCount').textContent = `전체 ${all.length}명 · 관리자 ${all.filter(m=>m.role==='admin').length} · 직원 ${all.filter(m=>m.role==='user').length} · 사용중 ${all.filter(m=>m.can_login!==false && m.active).length} · 중지 ${all.filter(m=>m.can_login===false).length} · 퇴사 ${all.filter(m=>!m.active).length}`;
+  $('#mbTable').innerHTML = list.length ? `<table><thead><tr><th class="c">NO</th><th>아이디</th><th>이름</th><th>연락처</th><th>이메일</th><th class="c">권한</th><th>비밀번호</th><th class="c">사용여부</th><th class="c">재직</th><th>최근 접속</th><th>최근 접속 IP</th><th class="n">담당 건수</th><th>등록일</th><th class="c">관리</th></tr></thead>
+    <tbody>${list.map((m,i)=>{ const me = m.email===S.me.email, l = last[m.email], on = m.can_login!==false; return `<tr>
+      <td class="c">${list.length - i}</td><td><b>${esc(m.login_id||'-')}</b>${me?' <span class="tag k">나</span>':''}</td><td><b>${esc(m.name)}</b></td>
+      <td>${esc(m.phone||'-')}</td><td>${esc(m.contact_email||'-')}</td>
+      <td class="c"><span class="tag ${m.role==='admin'?'k':'b'}">${ROLE_LABEL[m.role]||m.role}</span></td>
+      <td><span class="pwcell" data-id="${m.id}"><button class="btn s pwv" data-id="${m.id}">보기</button></span>${m.must_change_pw?' <span class="tag o" title="아직 비밀번호를 변경하지 않음 (초기 비밀번호 = 아이디)">초기</span>':''}</td>
+      <td class="c"><label class="sw" title="${me?'본인 계정은 변경할 수 없습니다':'Off 시 즉시 로그아웃 · 로그인 불가'}"><input type="checkbox" class="useSw" data-id="${m.id}" ${on?'checked':''} ${me||!m.active?'disabled':''}><span class="tr"></span><span class="tx">${on?'사용중':'중지'}</span></label></td>
       <td class="c">${m.active?'<span class="tag b">재직</span>':'<span class="tag">퇴사</span>'}</td>
       <td>${l?fmtDT(l.at):'<span class="eq">-</span>'}</td><td>${l?esc(l.ip||'-'):'<span class="eq">-</span>'}</td>
-      <td class="n">${fmt(S.deals.filter(d=>d.staff_id===m.id).length)}</td>
-      <td class="c"><div class="acts"><button class="btn s" onclick="editMember(${m.id})">수정</button>${me?'':`<button class="btn s" onclick="toggleMember(${m.id})">${m.active?'퇴사처리':'재직처리'}</button><button class="btn s r" onclick="delMember(${m.id})">삭제</button>`}</div></td></tr>`; }).join('')}</tbody></table>`;
-  $$('.roleSel').forEach(s => s.addEventListener('change', async () => {
-    const m = S.staff.find(x=>x.id===+s.dataset.id);
-    if(s.value!=='none' && !m.email){ alert('접속 권한을 주려면 먼저 [수정]에서 이메일을 등록하세요.'); s.value = m.role; return; }
-    if(adminGuard(m, { role:s.value })){ s.value = m.role; return; }
-    loading(true); try{ await DB.update('staff', m.id, { role:s.value }); await loadAll(); toast('권한이 변경되었습니다. (즉시 적용)'); }catch(e){ toast(errMsg(e),1); } finally{ loading(false); renderMembers(); }
-  }));
+      <td class="n">${fmt(S.deals.filter(d=>d.staff_id===m.id).length)}</td><td>${fmtDT(m.created_at).slice(0,10)}</td>
+      <td class="c"><div class="acts"><button class="btn s" onclick="openStaffForm(${m.id})">수정</button>${me?'':`<button class="btn s r" onclick="delMember(${m.id})">삭제</button>`}</div></td></tr>`; }).join('')}</tbody></table>`
+    : '<div class="empty">조회된 직원이 없습니다.</div>';
+  $$('#mbTable .pwv').forEach(b => b.onclick = () => showPw(+b.dataset.id, b.closest('.pwcell')));
+  $$('#mbTable .useSw').forEach(c => c.onchange = async () => {
+    const m = S.staff.find(x=>x.id===+c.dataset.id); if(!m) return;
+    const on = c.checked;
+    if(!on && adminGuard(m, { can_login:false })){ c.checked = true; return; }
+    if(!on && !confirm(`${m.name} (${m.login_id}) 의 사용을 중지할까요?\n즉시 로그아웃되며 로그인할 수 없습니다.`)){ c.checked = true; return; }
+    loading(true);
+    try{ await STAFF.update(m.id, { ...staffParams(m), can_login:on }); await loadAll(); toast(`${m.name} (${m.login_id}) ${on?'사용':'중지'} 처리되었습니다.`); }
+    catch(e){ toast(errMsg(e),1); } finally{ loading(false); renderMembers(); }
+  });
+}
+async function showPw(id, cell){
+  try{ const pw = await STAFF.getPw(id); cell.innerHTML = `<code style="font-size:13px;font-weight:700;color:var(--ink)">${esc(pw||'(없음)')}</code> <button class="btn s pwh">숨김</button>`;
+    cell.querySelector('.pwh').onclick = () => { cell.innerHTML = `<button class="btn s pwv">보기</button>`; cell.querySelector('.pwv').onclick = () => showPw(id, cell); }; }
+  catch(e){ toast(errMsg(e),1); }
 }
 function adminGuard(m, patch){
-  if(m.role==='admin' && m.active && ((patch.role && patch.role!=='admin') || patch.active===false || patch.del) && S.staff.filter(x=>x.role==='admin'&&x.active).length<=1){ alert('마지막 관리자는 삭제·강등·퇴사 처리할 수 없습니다.'); return true; }
+  if(liveAdmin(m) && ((patch.role && patch.role!=='admin') || patch.active===false || patch.can_login===false || patch.del) && S.staff.filter(liveAdmin).length<=1){ alert('마지막 관리자는 삭제·강등·중지·퇴사 처리할 수 없습니다.'); return true; }
   return false;
 }
 const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-async function addMember(){
-  const name = $('#mbName').value.trim(), email = $('#mbEmail').value.trim().toLowerCase(), role = $('#mbRole').value;
-  if(!name) return toast('이름을 입력하세요.',1);
-  if(role!=='none' && !email) return toast('접속 권한(관리자/사용자)은 이메일이 필요합니다.',1);
-  if(email && !emailOk(email)) return toast('이메일 형식을 확인하세요.',1);
-  if(email && S.staff.some(s=>s.email===email)) return toast('이미 등록된 이메일입니다.',1);
-  loading(true);
-  try{ await DB.insert('staff', { name, email:email||null, role, active:true }); $('#mbName').value=''; $('#mbEmail').value=''; $('#mbRole').value='user'; await loadAll(); renderMembers();
-    toast(role==='none' ? '담당직원으로 등록되었습니다.' : '등록되었습니다. 해당 이메일로 최초 가입 후 접속할 수 있습니다.'); }
-  catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
-}
-function editMember(id){
-  const m = S.staff.find(x=>x.id===id); const me = m.email && m.email===S.me.email;
-  $('#modalRoot').innerHTML = `<div class="modal-bg" id="mBg"><div class="modal"><h4>회원 · 직원 수정</h4>
-    <label class="f">이름<input id="eName" value="${esc(m.name)}"></label>
-    <label class="f">이메일<input id="eEmail" value="${esc(m.email||'')}" ${me?'disabled':''} placeholder="접속 권한 부여 시 필수"></label>
-    <div class="mb"><button class="btn" onclick="$('#modalRoot').innerHTML=''">취소</button><button class="btn p" id="eSave">저장</button></div></div></div>`;
-  $('#eSave').onclick = async () => {
-    const name = $('#eName').value.trim(), email = me ? m.email : $('#eEmail').value.trim().toLowerCase();
-    if(!name) return toast('이름을 입력하세요.',1);
-    if(email && !emailOk(email)) return toast('이메일 형식을 확인하세요.',1);
-    if(!email && m.role!=='none') return toast('접속 권한이 있는 회원은 이메일을 비울 수 없습니다.',1);
-    if(email && S.staff.some(s=>s.id!==id && s.email===email)) return toast('이미 등록된 이메일입니다.',1);
-    loading(true); try{ await DB.update('staff', id, { name, email:email||null }); $('#modalRoot').innerHTML=''; await loadAll(); renderMembers(); toast('수정되었습니다.'); }catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
+/* 직원 등록 · 수정 (초기 비밀번호 = 아이디 → 첫 로그인 시 본인이 변경) */
+async function openStaffForm(id){
+  const m = id ? S.staff.find(x=>x.id===id) : null; if(id && !m) return;
+  const me = !!m && m.email===S.me.email;
+  let nid = m ? m.login_id : '';
+  if(!m){ loading(true); try{ nid = await STAFF.nextId(); }catch(e){ toast(errMsg(e),1); return; } finally{ loading(false); } }
+  let act = m ? !!m.active : true;
+  $('#modalRoot').innerHTML = `<div class="modal-bg"><div class="modal w"><h4>${m ? '직원 정보 수정' : '직원 등록'}</h4>
+    <div class="sform">
+      <div class="srow"><span class="sl">아이디</span><div class="sv"><span class="idbox">${esc(nid||'-')}</span><span class="sh">${m ? '변경 불가' : '등록 순서대로 <b>자동 부여</b>'}</span></div></div>
+      <div class="srow"><span class="sl">비밀번호</span><div class="sv">${m
+        ? `<span class="pwcell" id="sPwCell"><button type="button" class="btn s" id="sPwView">보기</button></span>${m.must_change_pw?'<span class="tag o">초기 (아이디와 동일)</span>':''}<button type="button" class="btn s r" id="sPwReset" ${me?'disabled title="본인 비밀번호는 사이드바 [비밀번호 변경]에서 변경"':''}>비밀번호 초기화</button><span class="sh" style="width:100%">초기화 시 비밀번호 = 아이디(${esc(m.login_id)}) → 다음 로그인 때 본인이 새로 설정</span>`
+        : `<span class="sh">초기 비밀번호 = 아이디 (<b>${esc(nid)}</b>) · 첫 로그인 시 본인이 새 비밀번호로 변경</span>`}</div></div>
+      <div class="srow"><span class="sl req">이름</span><div class="sv"><input id="sName" value="${esc(m?.name||'')}" placeholder="홍길동"></div></div>
+      <div class="srow"><span class="sl req">연락처</span><div class="sv"><input id="sPhone" inputmode="numeric" value="${esc(m?.phone||'')}" placeholder="010-0000-0000"></div></div>
+      <div class="srow"><span class="sl">이메일</span><div class="sv"><input id="sEmail" type="email" value="${esc(m?.contact_email||'')}" placeholder="example@email.com"></div></div>
+      <div class="srow"><span class="sl">주소</span><div class="sv"><input id="sAddr" class="wide" value="${esc(m?.address||'')}" placeholder="서울특별시 강남구"></div></div>
+      <div class="srow"><span class="sl">권한</span><div class="sv"><select id="sRole" style="width:140px" ${me?'disabled':''}><option value="user">직원</option><option value="admin">관리자</option></select>${me?'<span class="sh">본인 권한은 변경 불가</span>':''}</div></div>
+      <div class="srow"><span class="sl">사용여부</span><div class="sv"><label class="sw"><input type="checkbox" id="sUse" ${(!m || m.can_login!==false)?'checked':''} ${me?'disabled':''}><span class="tr"></span><span class="tx" id="sUseTx"></span></label><span class="sh">Off = 로그인 불가 (담당자 명단에는 유지)</span></div></div>
+      ${m ? `<div class="srow"><span class="sl">재직상태</span><div class="sv"><button type="button" class="btn s" id="sActBtn" ${me?'disabled':''}></button><span class="sh" id="sActTx"></span></div></div>` : ''}
+    </div>
+    <div class="mb"><button class="btn" onclick="$('#modalRoot').innerHTML=''">취소</button><button class="btn p" id="sSave">${m ? '저장' : '등록'}</button></div></div></div>`;
+  $('#sRole').value = m?.role || 'user';
+  const useTx = () => { $('#sUseTx').textContent = $('#sUse').checked ? '사용중' : '중지'; };
+  $('#sUse').onchange = useTx; useTx();
+  const actTx = () => { if(!m) return; $('#sActBtn').textContent = act ? '퇴사 처리' : '재직 처리'; $('#sActTx').innerHTML = act ? '재직중' : '<b style="color:var(--orange)">퇴사</b> · 저장 시 반영 (로그인 불가 · 담당자 선택 목록 제외)'; };
+  if(m){
+    $('#sActBtn').onclick = () => { act = !act; if(!act){ $('#sUse').checked = false; useTx(); } actTx(); };
+    actTx();
+    $('#sPwView').onclick = () => showPw(m.id, $('#sPwCell'));
+    $('#sPwReset').onclick = async () => {
+      if(!confirm(`${m.name} (${m.login_id}) 의 비밀번호를 초기화할까요?\n비밀번호가 아이디(${m.login_id})로 바뀌고, 다음 로그인 때 새 비밀번호를 설정해야 합니다.`)) return;
+      loading(true); try{ await STAFF.resetPw(m.id); m.must_change_pw = true; await loadAll(); renderMembers(); toast(`비밀번호가 초기화되었습니다. (아이디 ${m.login_id} / 비밀번호 ${m.login_id})`); openStaffForm(m.id); }
+      catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
+    };
+  }
+  setTimeout(() => $('#sName').focus(), 30);
+  $('#sSave').onclick = async () => {
+    const p = { name:$('#sName').value.trim(), phone:$('#sPhone').value.trim(), email:$('#sEmail').value.trim().toLowerCase(), address:$('#sAddr').value.trim(), role:$('#sRole').value, can_login:$('#sUse').checked, active:act };
+    if(!p.name){ $('#sName').classList.add('bad'); return toast('이름을 입력하세요.',1); }
+    if(p.phone.replace(/\D/g,'').length < 9){ $('#sPhone').classList.add('bad'); return toast('연락처를 확인하세요.',1); }
+    if(p.email && !emailOk(p.email)){ $('#sEmail').classList.add('bad'); return toast('이메일 형식을 확인하세요.',1); }
+    if(m && adminGuard(m, { role:p.role, active:p.active, can_login:p.can_login })) return;
+    if(m && m.active && !p.active && !confirm(`${m.name} (${m.login_id}) 을(를) 퇴사 처리할까요?\n즉시 로그아웃되며 로그인할 수 없습니다. 담당 건 기록은 유지됩니다.`)) return;
+    loading(true);
+    try{
+      if(m){ await STAFF.update(m.id, p); $('#modalRoot').innerHTML=''; await loadAll(); renderMembers(); toast('수정되었습니다.'); }
+      else{
+        const r = await STAFF.create(p); $('#modalRoot').innerHTML=''; await loadAll(); renderMembers();
+        alert(`직원이 등록되었습니다.\n\n이름 : ${p.name}\n아이디 : ${r.login_id}\n초기 비밀번호 : ${r.login_id}\n\n첫 로그인 시 본인이 사용할 비밀번호로 변경합니다.`);
+      }
+    }catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
   };
 }
-async function toggleMember(id){
-  const m = S.staff.find(x=>x.id===id); if(adminGuard(m, { active:!m.active })) return;
-  if(m.active && !confirm(`${m.name}님을 퇴사 처리할까요?\n즉시 접속이 차단되며, 담당 건 기록은 유지됩니다.`)) return;
-  loading(true); try{ await DB.update('staff', id, { active:!m.active }); await loadAll(); renderMembers(); }catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
-}
 async function delMember(id){
-  const m = S.staff.find(x=>x.id===id); if(adminGuard(m, { del:true })) return;
+  const m = S.staff.find(x=>x.id===id); if(!m || m.email===S.me.email) return;
+  if(adminGuard(m, { del:true })) return;
   const n = S.deals.filter(d=>d.staff_id===id).length;
-  if(!confirm(`${m.name}님을 삭제할까요?${n?`\n담당 확정 ${n}건은 '담당 미지정'으로 바뀝니다. (퇴사처리 권장)`:''}\n즉시 접속이 차단됩니다.`)) return;
+  if(!confirm(`${m.name} (${m.login_id}) 을(를) 삭제할까요?\n로그인 계정이 영구 삭제되며 같은 아이디는 다시 사용되지 않습니다.${n?`\n담당 확정 ${n}건은 '담당 미지정'으로 바뀝니다. (퇴사 처리 권장)`:''}`)) return;
   loading(true);
-  try{ await DB.remove('staff', id); if(DEMO){ const d=Demo.load(); d.deals.forEach(x=>{ if(x.staff_id===id) x.staff_id=null; }); Demo.save(); } await loadAll(); renderMembers(); toast('삭제되었습니다.'); }
+  try{ await STAFF.remove(id); await loadAll(); renderMembers(); toast('삭제되었습니다.'); }
   catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
 }
 /* 접속 기록 / IP */
 async function renderLogs(){
   if(!isAdmin()) return;
   try{ S.ipRules = await DB.list('ip_rules'); }catch(e){}
-  const ipTbl = (type) => { const l = S.ipRules.filter(r=>r.type===type); return l.length ? `<table><thead><tr><th>IP</th><th>${type==='block'?'사유':'메모'}</th><th>등록</th><th class="c">관리</th></tr></thead><tbody>${l.map(r=>`<tr ${type==='block'?'class="danger"':''}><td><b>${esc(r.ip)}</b></td><td>${esc(r.reason||'')}</td><td>${fmtDT(r.created_at)}<br><span class="eq">${esc(r.created_by||'')}</span></td><td class="c"><button class="btn s dip" data-ip="${esc(r.ip)}">${type==='block'?'차단 해제':'삭제'}</button></td></tr>`).join('')}</tbody></table>` : `<div class="empty" style="padding:20px">${type==='block'?'차단된 IP가 없습니다.':'등록된 허용 IP가 없습니다.'}</div>`; };
+  const ipTbl = (type) => { const l = S.ipRules.filter(r=>r.type===type); return l.length ? `<table><thead><tr><th>IP</th><th>${type==='block'?'사유':'메모'}</th><th>등록</th><th class="c">관리</th></tr></thead><tbody>${l.map(r=>`<tr ${type==='block'?'class="danger"':''}><td><b>${esc(r.ip)}</b></td><td>${esc(r.reason||'')}</td><td>${fmtDT(r.created_at)}<br><span class="eq">${esc(r.created_by==='system' ? 'system' : (r.created_by ? logWho(r.created_by) : ''))}</span></td><td class="c"><button class="btn s dip" data-ip="${esc(r.ip)}">${type==='block'?'차단 해제':'삭제'}</button></td></tr>`).join('')}</tbody></table>` : `<div class="empty" style="padding:20px">${type==='block'?'차단된 IP가 없습니다.':'등록된 허용 IP가 없습니다.'}</div>`; };
   $('#ipBlockTable').innerHTML = ipTbl('block'); $('#ipAllowTable').innerHTML = ipTbl('allow');
   const from = $('#logFrom').value, to = $('#logTo').value, sev = $('#logSev').value, q = $('#logQ').value.trim().toLowerCase();
   let logs = [];
@@ -2199,10 +2363,10 @@ async function renderLogs(){
   $('#logCount').innerHTML = `${logs.length.toLocaleString()}건 · <b style="color:var(--red)">비정상 ${nD}건</b>`;
   const blocked = new Set(S.ipRules.filter(r=>r.type==='block').map(r=>r.ip));
   const sevLb = { normal:'정상', warn:'주의', danger:'비정상' };
-  $('#logTable').innerHTML = logs.length ? `<table><thead><tr><th>시각</th><th class="c">구분</th><th>이벤트</th><th>이메일</th><th>IP</th><th>기기</th><th>상세</th><th class="c">IP 조치</th></tr></thead>
+  $('#logTable').innerHTML = logs.length ? `<table><thead><tr><th>시각</th><th class="c">구분</th><th>이벤트</th><th>아이디</th><th>IP</th><th>기기</th><th>상세</th><th class="c">IP 조치</th></tr></thead>
     <tbody>${logs.slice(0,2000).map(l=>`<tr class="${l.severity==='danger'?'danger':l.severity==='warn'?'warn':''}">
       <td>${fmtDT(l.at)}</td><td class="c"><span class="sev ${l.severity}">${sevLb[l.severity]||l.severity}</span></td><td>${esc(EVENT_LABEL[l.event]||l.event)}</td>
-      <td>${esc(l.email||'-')}</td><td><b>${esc(l.ip||'-')}</b>${blocked.has(l.ip)?' <span class="tag r">차단됨</span>':''}</td><td title="${esc(l.ua||'')}">${esc(uaShort(l.ua))}</td><td class="memo" title="${esc(l.detail||'')}">${esc(l.detail||'')}</td>
+      <td>${esc(logWho(l.email))}</td><td><b>${esc(l.ip||'-')}</b>${blocked.has(l.ip)?' <span class="tag r">차단됨</span>':''}</td><td title="${esc(l.ua||'')}">${esc(uaShort(l.ua))}</td><td class="memo" title="${esc(l.detail||'')}">${esc(l.detail||'')}</td>
       <td class="c">${l.ip && !blocked.has(l.ip) && l.ip!==S.ip ? `<button class="btn s r qb" data-ip="${esc(l.ip)}">차단</button>` : ''}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">기록이 없습니다.</div>';
   $$('#logTable .qb').forEach(b => b.onclick = () => quickBlock(b.dataset.ip));
   $$('#ipBlockTable .dip, #ipAllowTable .dip').forEach(b => b.onclick = () => delIpRule(b.dataset.ip));
@@ -2256,7 +2420,7 @@ $('#aPwShow').addEventListener('click', () => {
   const chk = await SEC.check(); S.ip = chk.ip || '';
   if(chk.blocked){ await SEC.log('BLOCKED_IP', null, '차단된 IP 접속 시도'); return showBlock('차단된 IP에서의 접근입니다.' + (chk.reason ? ` (${chk.reason})` : '')); }
   if(DEMO){
-    S.me = { id:1, name:'데모 관리자', email:'demo@local', role:'admin', active:true };
+    S.me = clone(Demo.load().staff.find(x=>x.id===1));
     try{ await enterApp(); }catch(e){ toast(errMsg(e),1); }
     return;
   }
