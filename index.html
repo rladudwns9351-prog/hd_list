@@ -168,6 +168,12 @@ tr.pend td{background:var(--blue-l)!important}
 #lTable .pin.c1{right:340px;width:132px;min-width:132px;max-width:132px}
 #lTable .pin.c0{right:472px;box-shadow:-1px 0 0 var(--line)}
 #lTable tbody tr{cursor:pointer}
+#lTable td.ic{line-height:1.45}
+#lTable .ic .p{display:block;font-size:11px;font-weight:800;color:var(--gray)}
+#lTable .ic .s{display:block;font-size:11px;color:var(--gray)}
+#lTable .ic b{display:block}
+#lTable .ic .tag{margin-top:3px;font-size:10px;padding:2px 6px}
+#lTable tfoot small{display:block;font-size:11px;font-weight:700;color:var(--gray)}
 .dlvin{height:26px;width:104px;font-size:11px;padding:0 4px}
 .mat{font-size:11.5px;line-height:1.55;color:var(--gray)}
 .mat b{color:var(--ink);font-weight:700;margin-left:2px}
@@ -466,7 +472,7 @@ tr.warn td{background:var(--orange-l)!important}
           <div class="card"><h3>GA 업체별 추이 <small>상위 6개</small></h3><div class="chartbox"><canvas id="cGa"></canvas></div></div>
         </div>
         <div class="card"><h3>GA 업체별 실적 분석 <small id="dGaNote"></small></h3><div class="tw" id="dGaTable"></div></div>
-        <div class="card admin-only"><h3>법인 손익 <span class="tag k" style="margin-right:auto;margin-left:8px">관리자 전용</span><small>수익 = 법인수익인센티브(정산기준 차량가 × %) + 대리점수당 · 지출 = 프로모션 + 슬라이딩 + 품의 · 법인 순이익 = 수익 − 지출</small></h3><div class="tw" id="dPnl"></div></div>
+        <div class="card admin-only"><h3>법인 손익 <span class="tag k" style="margin-right:auto;margin-left:8px">관리자 전용</span><small>수익 = 법인수익인센티브(정산기준 차량가 × %) + VAT 10% + 대리점수당 · 지출 = 프로모션 + 슬라이딩 + 품의 · 법인 순이익 = 수익 − 지출</small></h3><div class="tw" id="dPnl"></div></div>
         <div class="card admin-only"><h3>품의 내역 <span class="tag k" style="margin-right:auto;margin-left:8px">관리자 전용</span><small id="dApprNote"></small></h3><div class="tw" id="dAppr"></div></div>
         <div class="grid2">
           <div class="card"><h3>담당 직원별 실적 <small>상세 분류는 추후 반영</small></h3><div class="tw" id="dStaffTable"></div></div>
@@ -488,6 +494,9 @@ tr.warn td{background:var(--orange-l)!important}
             <label class="f"><span class="lb"><span class="req">금융사</span></span><select id="fCap"></select></label>
             <div class="f"><span class="lb">유입 구분</span><div class="seg" id="fCh"><button type="button" data-v="GA" class="on">GA</button><button type="button" data-v="직영업">직영업</button></div></div>
             <label class="f"><span class="lb">GA 업체명<span class="hint">새 이름 입력 시 자동 등록</span></span><input id="fGa" list="gaList" placeholder="입력 또는 선택"></label>
+            <label class="f"><span class="lb">견적번호 (딜)<span class="hint">중복 등록 불가</span></span><input id="fDealNo" maxlength="20" placeholder="예) L2EAUDD" autocomplete="off" style="text-transform:uppercase"></label>
+            <label class="f"><span class="lb">탁송지 (시·도)</span><select id="fRegion"></select></label>
+            <label class="f s2"><span class="lb">탁송지 상세 (시·군·구)</span><input id="fRegionDetail" placeholder="예) 양산시"></label>
           </div>
 
           <div class="sec-t">차량 정보</div>
@@ -497,6 +506,8 @@ tr.warn td{background:var(--orange-l)!important}
             <label class="f"><span class="lb"><span class="req">정산기준 차량가 (취득원가)</span></span><input id="fAcq" class="money" inputmode="numeric" placeholder="예) 50,000,000"></label>
             <label class="f"><span class="lb">외장 색상</span><input id="fExt" placeholder="예) 쉬머링 실버"></label>
             <label class="f"><span class="lb">내장 색상</span><input id="fInt" placeholder="예) 블랙"></label>
+            <label class="f"><span class="lb">차량 계약번호</span><input id="fContract" maxlength="40" placeholder="예) A3526JK015459" autocomplete="off"></label>
+            <label class="f"><span class="lb">차대번호<span class="hint" id="fVinCnt"></span></span><input id="fVin" maxlength="20" placeholder="17자리" autocomplete="off" style="text-transform:uppercase"></label>
           </div>
           <div class="lbox">
             <div class="lbox-h"><span>차량 옵션<small>항목 / 금액</small></span><button type="button" class="btn s mini" onclick="addOptRow()">＋ 옵션 추가</button></div>
@@ -505,19 +516,20 @@ tr.warn td{background:var(--orange-l)!important}
           <div class="sumbox"><div><b>최종 차량가</b><small>= 차량가 + 옵션가 합산</small></div><div class="v" id="hCarTotal">0 원</div></div>
 
           <div class="admin-only">
-            <div class="sec-t">금액 정보 <span class="tag k">관리자 전용</span><span class="tag b">0.1% 단위 · 금액 = 정산기준 차량가 × %</span></div>
+            <div class="sec-t">금액 정보 <span class="tag k">관리자 전용</span><span class="tag b">0.1% 단위 · 금액 = 정산기준 차량가 × % · 법인수익인센티브는 VAT 10% 별도</span></div>
             <div class="inc-sec">
               <div class="fg">
+                <div class="f"><span class="lb">정산 방식<span class="hint">VAT · 3.3% 자동계산</span></span><div class="seg" id="fSettle"><button type="button" data-v="계산서 발행" class="on">계산서 발행</button><button type="button" data-v="3.3% 공제">3.3% 공제</button></div></div>
                 <label class="f"><span class="lb"><span class="req">총인센티브 (%)</span></span><input id="fTotPct" type="number" step="0.1" min="0" class="pct"><span class="hint" id="hTot"></span></label>
                 <label class="f"><span class="lb"><span class="req">지급예정인센티브 (%)</span></span><input id="fPayPct" type="number" step="0.1" min="0" class="pct"><span class="hint" id="hPay"></span></label>
                 <label class="f"><span class="lb"><span class="req">법인수익인센티브 (%)</span></span><input id="fCorpPct" type="number" step="0.1" min="0" class="pct"><span class="hint" id="hCorp"></span></label>
                 <label class="f" style="grid-column:1"><span class="lb">해당 월 프로모션<span class="hint">목록 선택 → 자동 반영</span></span><select id="fPromoSel"></select></label>
                 <label class="f"><span class="lb">프로모션 (%)</span><input id="fPromoPct" type="number" step="0.1" min="0" class="pct"></label>
                 <label class="f"><span class="lb">프로모션 (원)</span><input id="fPromoAmt" class="money" inputmode="numeric" placeholder="0"></label>
-                <div class="f"><span class="lb">프로모션 금액 (자동계산)</span><div class="calc" id="hPromo">0원</div></div>
+                <div class="f"><span class="lb">프로모션 금액 (자동계산)</span><div class="calc" id="hPromo">0원</div><span class="hint" id="hPromoIn"></span></div>
                 <label class="f" style="grid-column:1"><span class="lb">슬라이딩<span class="hint">목록 선택 → 자동 반영</span></span><select id="fSlideSel"></select></label>
                 <label class="f"><span class="lb">슬라이딩 (%)</span><input id="fSlidePct" type="number" step="0.1" min="0" class="pct"></label>
-                <div class="f"><span class="lb">슬라이딩 금액 (자동계산)</span><div class="calc" id="hSlide">0원</div></div>
+                <div class="f"><span class="lb">슬라이딩 금액 (자동계산)</span><div class="calc" id="hSlide">0원</div><span class="hint" id="hSlideIn"></span></div>
                 <label class="f" style="grid-column:1"><span class="lb">대리점수당 (원)</span><input id="fDealerFee" class="money" inputmode="numeric" placeholder="0"></label>
                 <div class="f"><span class="lb">&nbsp;</span><button type="button" class="dashbtn" id="fDealerBtn">대리점출고 시 클릭하세요!</button></div>
               </div>
@@ -573,7 +585,7 @@ tr.warn td{background:var(--orange-l)!important}
             <label class="f">구분/GA<select id="lGa"></select></label>
             <label class="f">담당 직원<select id="lStaff"></select></label>
             <label class="f">펀딩 유형<select id="lProd"><option value="all">전체</option><option>렌트</option><option>리스</option><option>할부형렌트</option><option>이용자리스</option></select></label>
-            <label class="f">검색<input id="lQ" placeholder="고객명·차종·차대번호·연락처"></label>
+            <label class="f">검색<input id="lQ" placeholder="고객명·차종·견적번호·차대번호·연락처"></label>
             <button class="btn k" onclick="renderList()">조회</button>
             <div class="sp"></div>
             <span class="note" id="selInfo" style="margin:0 2px 10px 0;font-weight:700">선택 0건</span>
@@ -783,7 +795,7 @@ function mapErr(e){
   if(/LAST_ADMIN/.test(m)) return new Error('마지막 관리자는 삭제·변경할 수 없습니다.');
   if(/NOT_REGISTERED|Database error saving new user/i.test(m)) return new Error('NOT_REGISTERED');
   if(e?.code==='23505' || /duplicate key/i.test(m)){
-    if(/deal_no/.test(m)) return new Error('이미 등록된 확정딜번호입니다.');
+    if(/deal_no/.test(m)) return new Error('이미 등록된 견적번호(딜)입니다.');
     if(/email/.test(m)) return new Error('이미 등록된 이메일입니다.');
     if(/name/.test(m)) return new Error('이미 등록된 이름입니다.');
     return new Error('중복된 값이 있습니다.');
@@ -841,7 +853,7 @@ const DemoFiles = {
   removeDeal(id){ this.of(id).forEach(a=>this.remove(a.id)); }
 };
 const Demo = {
-  key:'roadon_ga_demo_v5', d:null,
+  key:'roadon_ga_demo_v6', d:null,
   load(){ if(this.d) return this.d; try{ this.d = JSON.parse(localStorage.getItem(this.key)); }catch(e){} if(!this.d){ this.d = this.seed(); this.save(); } return this.d; },
   save(){ try{ localStorage.setItem(this.key, JSON.stringify(this.d)); }catch(e){} },
   nextId(t){ const d = this.load(); d.seq[t] = (d.seq[t]||0)+1; return d.seq[t]; },
@@ -874,14 +886,14 @@ const Demo = {
           const dlvAt = dlv ? [addDays(cd, 5+Math.floor(R()*15)), today].sort()[0] : null;
           let vin = 'KMH'; for(let j=0;j<14;j++) vin += vinCh[Math.floor(R()*vinCh.length)];
           const cm = pick([36,48,60,60]), et = cm===60 && R()<0.35 ? pick(['5-2','5-1']) : cm===48 && R()<0.35 ? pick(['4-2','4-1']) : null;
-          deals.push({ id, confirm_date:cd, deal_no:null, contract_months:cm, early_type:et, terms:{ car_price:(3000+Math.floor(R()*5000))*10000, ext_color:pick(['화이트','블랙','실버']), int_color:'블랙', options:[], dlv_plan:null, dep_type:'보증금', dep_amt:pick([0,3000000,5000000]), mileage_km:pick([10000,20000,30000]), monthly_fee:(40+Math.floor(R()*60))*10000 }, customer_name:pick(fam)+pick(giv), phone:'010-'+(1000+Math.floor(R()*9000))+'-'+(1000+Math.floor(R()*9000)),
+          deals.push({ id, confirm_date:cd, deal_no:'RD'+(10000+id), contract_months:cm, early_type:et, terms:{ car_price:(3000+Math.floor(R()*5000))*10000, ext_color:pick(['화이트','블랙','실버']), int_color:'블랙', options:[], dlv_plan:null, dep_type:'보증금', dep_amt:pick([0,3000000,5000000]), mileage_km:pick([10000,20000,30000]), monthly_fee:(40+Math.floor(R()*60))*10000 }, customer_name:pick(fam)+pick(giv), phone:'010-'+(1000+Math.floor(R()*9000))+'-'+(1000+Math.floor(R()*9000)),
             capital_id:1, product:prod, car_model:pick(models), contract_no:'C'+(7000000+id), vin, acq_cost:(2500+Math.floor(R()*5500))*10000,
             channel:u.ch, ga_id:u.ga, staff_id:u.ch==='GA' ? pick([2,3]) : 4, delivery_region:pick(SIDO), delivery_detail:'', accessories:pick(['블랙박스+썬팅','썬팅','PPF 전면','없음','블랙박스']),
             memo:'', delivered:dlv, delivered_at:dlvAt, settled:stl, settled_at: stl ? [addDays(dlvAt, 10), today].sort()[0] : null,
             ins_ok:ins, ins_at: ins ? [addDays(dlvAt, 3), today].sort()[0] : null, created_by_email:'demo@local', created_at:cd+'T09:00:00' });
           const tp = Math.round((3+R()*4)*10)/10, pp = Math.round(tp*(0.5+R()*0.2)*10)/10;
           const sl = R()<0.3 ? 0.3 : 0, ap = R()<0.08;
-          incs.push({ deal_id:id, total_pct:tp, pay_pct:pp, corp_pct:Math.round((tp-pp)*10)/10, promo_name:'공통 프로모션', promo_pct:0.5, promo_amt:null, sliding_name: sl ? '월 6~10대 구간' : null, sliding_pct: sl || null, sliding_amt:null,
+          incs.push({ deal_id:id, settle_method: id%4===0 ? '3.3% 공제' : '계산서 발행', total_pct:tp, pay_pct:pp, corp_pct:Math.round((tp-pp)*10)/10, promo_name:'공통 프로모션', promo_pct:0.5, promo_amt:null, sliding_name: sl ? '월 6~10대 구간' : null, sliding_pct: sl || null, sliding_amt:null,
             ...(() => { const a = ap ? [{ name:pick(['탁송비 지원','용품 추가 지원','고객 유류비 지원']), amt:(10+Math.floor(R()*30))*10000 }] : []; return { approvals:a, approval_amt:a[0]?.amt||null, approval_reason:a[0]?.name||null }; })(),
             dealer_fee: R()<0.1 ? (20+Math.floor(R()*30))*10000 : null, dealer_release:false });
         }
@@ -1135,6 +1147,7 @@ function metricVal(d, m){
   if(m==='total') return incAmt(d,'total_pct');
   if(m==='pay') return incAmt(d,'pay_pct');
   if(m==='corp') return incAmt(d,'corp_pct');
+  if(m==='vat') return corpVat(d);
   if(m==='promo') return promoAmt(d);
   if(m==='slide') return slideAmt(d);
   if(m==='appr') return apprAmt(d);
@@ -1149,7 +1162,14 @@ function slideAmt(d){ const i = S.inc[d.id]; if(!i) return 0; return Math.round(
 function apprAmt(d){ return num(S.inc[d.id]?.approval_amt); }
 function expAmt(d){ return promoAmt(d) + slideAmt(d) + apprAmt(d); }
 function dealerAmt(d){ return num(S.inc[d.id]?.dealer_fee); }
-function netAmt(d){ return incAmt(d,'corp_pct') + dealerAmt(d) - expAmt(d); }
+/* 정산 방식 : 법인수익인센티브 = VAT 10% 별도(계산서 발행) → 입금액 = 금액 + VAT / '3.3% 공제' 건은 프로모션·슬라이딩 입금액 = 금액 − 3.3% */
+function settleOf(d){ return S.inc[d.id]?.settle_method==='3.3% 공제' ? '3.3% 공제' : '계산서 발행'; }
+const vatOf = v => Math.round(v/10), whOf = v => Math.round(v*33/1000);
+function corpVat(d){ return vatOf(incAmt(d,'corp_pct')); }
+function corpIn(d){ return incAmt(d,'corp_pct') + corpVat(d); }
+function promoIn(d){ const v = promoAmt(d); return settleOf(d)==='3.3% 공제' ? v - whOf(v) : v; }
+function slideIn(d){ const v = slideAmt(d); return settleOf(d)==='3.3% 공제' ? v - whOf(v) : v; }
+function netAmt(d){ return corpIn(d) + dealerAmt(d) - expAmt(d); }   // 법인 순수익 = (법인수익인센티브 + VAT) + 대리점수당 − 프로모션 − 슬라이딩 − 품의
 const isLease = d => ['리스','이용자리스'].includes(d?.product);   // 보험가입증명서 회신 대상
 const basisDate = (d, b) => b==='dlv' ? d.delivered_at : d.confirm_date;
 /* 계약조건 · 만기 계산 (기준일 = 인도일자) */
@@ -1353,7 +1373,7 @@ function renderDash(){
 
   // 법인 손익 · 품의 내역 (관리자 전용)
   if(isAdmin()){
-    const KS = [['count','확정 건수',''],['acq','취득원가',''],['total','총인센티브',''],['pay','지급예정인센티브',''],['corp','법인수익인센티브 (수익)','pnl-rev'],['dealer','대리점수당 (수익)','pnl-rev'],['promo','프로모션 (지출)',''],['slide','슬라이딩 (지출)',''],['appr','품의 (지출)',''],['exp','지출 합계','pnl-sum'],['net','법인 순이익','pnl-net']];
+    const KS = [['count','확정 건수',''],['acq','취득원가',''],['total','총인센티브',''],['pay','지급예정인센티브',''],['corp','법인수익인센티브 (수익)','pnl-rev'],['vat','법인수익인센티브 VAT 10% (수익)','pnl-rev'],['dealer','대리점수당 (수익)','pnl-rev'],['promo','프로모션 (지출)',''],['slide','슬라이딩 (지출)',''],['appr','품의 (지출)',''],['exp','지출 합계','pnl-sum'],['net','법인 순이익','pnl-net']];
     const sums = {}; KS.forEach(([k]) => sums[k] = Object.fromEntries(months.map(m=>[m,0])));
     const inRange = pool.filter(d => { const dt = basisDate(d, basis); return dt && months.includes(dt.slice(0,7)); });
     inRange.forEach(d => { const ym = basisDate(d, basis).slice(0,7); KS.forEach(([k]) => sums[k][ym] += metricVal(d, k)); });
@@ -1386,6 +1406,11 @@ function initDealForm(){
     $('#fSlidePct').value = it && it.pct!=null ? it.pct : '';
     S.formDirty = true; incHints();
   });
+  $$('#fSettle button').forEach(b => b.onclick = () => { setSeg('fSettle', b.dataset.v); S.formDirty = true; incHints(); });
+  $('#fRegion').innerHTML = '<option value="">선택</option>' + SIDO.map(x=>`<option>${x}</option>`).join('');
+  $('#fRegion').addEventListener('change', () => { S.formDirty = true; });
+  $('#fDealNo').addEventListener('input', () => { $('#fDealNo').value = $('#fDealNo').value.toUpperCase().replace(/\s/g,''); });
+  $('#fVin').addEventListener('input', vinHint);
   $('#fDealerBtn').addEventListener('click', () => { const on = !$('#fDealerBtn').classList.contains('on'); setDealer(on); S.formDirty = true; });
   // 계약개월수 · 해지감면 · 인도완료일자 → 만기일 자동 계산
   $('#fEarly').addEventListener('change', () => { const e = EARLY[$('#fEarly').value]; if(e) $('#fMonths').value = String(e.y*12); updateMat(); });
@@ -1405,6 +1430,7 @@ function pickDate(id){
   p.onchange = () => { $('#'+id).value = p.value; $('#'+id).classList.remove('bad'); refreshPromoOptions(); };
   try{ p.showPicker(); }catch(e){ p.click(); }
 }
+function vinHint(){ $('#fVin').value = $('#fVin').value.toUpperCase().replace(/\s/g,''); const n = $('#fVin').value.length; $('#fVinCnt').textContent = n ? `${n}/17` : ''; $('#fVinCnt').className = 'hint' + (n && n!==17 ? ' o' : ''); }
 function setDealer(on){ $('#fDealerBtn').classList.toggle('on', !!on); $('#fDealerBtn').textContent = on ? '✓ 대리점출고' : '대리점출고 시 클릭하세요!'; }
 function lrowHtml(ph, name, amt){ return `<div class="lrow"><input class="ln" placeholder="${ph}" value="${esc(name||'')}"><input class="la money" inputmode="numeric" placeholder="0" value="${num(amt) ? fmt(amt) : ''}"><span class="won">원</span><button type="button" class="btn s r mini">삭제</button></div>`; }
 function addOptRow(name, amt){ $('#optRows').insertAdjacentHTML('beforeend', lrowHtml('옵션 항목', name, amt)); carTotal(); if(name===undefined){ S.formDirty = true; $('#optRows .lrow:last-child .ln').focus(); } }
@@ -1437,7 +1463,8 @@ const ST_DEF = { dlv:{ on:'delivered', at:'delivered_at', name:'인도', onLb:'�
 const FORM_LOCK = '#p-deal input:not([type=file]), #p-deal select, #p-deal textarea, #p-deal .seg button, #p-deal .mini, #p-deal .dashbtn, #p-deal .dwrap .btn';
 function resetDealForm(){
   S.editId = null; S.formDirty = false;
-  ['#fDate','#fCust','#fPhone','#fCar','#fAcq','#fGa','#fMemo','#fTotPct','#fPayPct','#fCorpPct','#fPromoPct','#fPromoAmt','#fSlidePct','#fDealerFee'].forEach(id => { $(id).value=''; $(id).classList.remove('bad'); });
+  ['#fDate','#fCust','#fPhone','#fCar','#fAcq','#fGa','#fMemo','#fTotPct','#fPayPct','#fCorpPct','#fPromoPct','#fPromoAmt','#fSlidePct','#fDealerFee','#fDealNo','#fContract','#fVin','#fRegionDetail'].forEach(id => { $(id).value=''; $(id).classList.remove('bad'); });
+  $('#fRegion').value = ''; $('#fVinCnt').textContent = ''; setSeg('fSettle', '계산서 발행');
   ['#fProd','#fCap'].forEach(id => $(id).classList.remove('bad'));
   $('#fDate').value = todayStr();
   $('#fCap').value = S.caps.find(c=>c.name==='현대캐피탈' && c.active)?.id || S.caps.find(c=>c.active)?.id || '';
@@ -1466,6 +1493,10 @@ function editDeal(id){
   $('#fDate').value = d.confirm_date; $('#fCust').value = d.customer_name; $('#fPhone').value = d.phone||'';
   $('#fCap').value = d.capital_id || ''; $('#fCar').value = d.car_model||''; $('#fAcq').value = d.acq_cost ? fmt(d.acq_cost) : ''; $('#fMemo').value = d.memo||'';
   fillTerms(d);
+  $('#fDealNo').value = d.deal_no||''; $('#fContract').value = d.contract_no||''; $('#fVin').value = d.vin||''; vinHint();
+  if(d.delivery_region && ![...$('#fRegion').options].some(o=>o.value===d.delivery_region)) $('#fRegion').insertAdjacentHTML('beforeend', `<option>${esc(d.delivery_region)}</option>`);
+  $('#fRegion').value = d.delivery_region||''; $('#fRegionDetail').value = d.delivery_detail||'';
+  setSeg('fSettle', S.inc[id]?.settle_method==='3.3% 공제' ? '3.3% 공제' : '계산서 발행');
   setSeg('fCh', d.channel||'GA'); syncChannel(); $('#fGa').value = d.ga_id ? gaName(d.ga_id) : '';
   $('#fStaff').innerHTML = staffOptions(d.staff_id);
   const i = S.inc[id] || {};
@@ -1490,16 +1521,20 @@ function formInc(){
   const acq = num($('#fAcq').value), pc = id => $(id).value==='' ? 0 : Number($(id).value);
   const corp = Math.round(acq*pc('#fCorpPct')/100), promo = Math.round(acq*pc('#fPromoPct')/100) + num($('#fPromoAmt').value), slide = Math.round(acq*pc('#fSlidePct')/100),
         appr = readRows('#apprRows').reduce((a,x)=>a+x.amt,0), dealer = num($('#fDealerFee').value);
-  return { acq, corp, promo, slide, appr, dealer, net: corp + dealer - promo - slide - appr };
+  const wh = segVal('fSettle')==='3.3% 공제', vat = vatOf(corp);
+  return { acq, corp, vat, promo, slide, appr, dealer, wh, promoWh: wh ? whOf(promo) : 0, slideWh: wh ? whOf(slide) : 0, net: corp + vat + dealer - promo - slide - appr };
 }
 function incHints(){
   const acq = num($('#fAcq').value);
-  [['#fTotPct','#hTot'],['#fPayPct','#hPay'],['#fCorpPct','#hCorp']].forEach(([i,h]) => {
+  [['#fTotPct','#hTot'],['#fPayPct','#hPay']].forEach(([i,h]) => {
     const p = $(i).value; $(h).textContent = (p!=='' && acq) ? `= ${fmt(Math.round(acq*Number(p)/100))}원` : '';
   });
   const v = formInc();
+  $('#hCorp').textContent = ($('#fCorpPct').value!=='' && acq) ? `= ${fmt(v.corp)} + VAT ${fmt(v.vat)} = ${fmt(v.corp+v.vat)}원` : '';
+  const whTxt = (amt, w) => v.wh && amt ? `− 3.3% ${fmt(w)} = 입금액 ${fmt(amt-w)}원` : '';
   $('#hPromo').textContent = fmt(v.promo)+'원'; $('#hSlide').textContent = fmt(v.slide)+'원';
-  $('#hNet').innerHTML = `법인 순이익 <b class="${v.net<0?'neg':''}">${fmt(v.net)}원</b> = 법인수익인센티브 ${fmt(v.corp)} + 대리점수당 ${fmt(v.dealer)} − 프로모션 ${fmt(v.promo)} − 슬라이딩 ${fmt(v.slide)} − 품의 ${fmt(v.appr)}`;
+  $('#hPromoIn').textContent = whTxt(v.promo, v.promoWh); $('#hSlideIn').textContent = whTxt(v.slide, v.slideWh);
+  $('#hNet').innerHTML = `법인 순이익 <b class="${v.net<0?'neg':''}">${fmt(v.net)}원</b> = (법인수익인센티브 ${fmt(v.corp)} + VAT ${fmt(v.vat)}) + 대리점수당 ${fmt(v.dealer)} − 프로모션 ${fmt(v.promo)} − 슬라이딩 ${fmt(v.slide)} − 품의 ${fmt(v.appr)}`;
 }
 /* 프로모션 · 슬라이딩 : 업체·설정에 등록된 목록을 드롭박스로 선택 */
 function curGaId(){ if(segVal('fCh')==='직영업') return null; const nm = $('#fGa').value.trim().toLowerCase(); return S.ga.find(g=>g.name.toLowerCase()===nm)?.id || null; }
@@ -1550,7 +1585,9 @@ function readDealForm(){
     capital_id: Number($('#fCap').value) || null, product: $('#fProd').value || null, car_model: $('#fCar').value.trim() || null,
     acq_cost: num($('#fAcq').value), channel: segVal('fCh') || 'GA', staff_id: Number($('#fStaff').value) || null, memo: $('#fMemo').value.trim() || null,
     contract_months: Number($('#fMonths').value) || null, early_type: $('#fEarly').value || null, terms: readTerms(),
-    delivered: !!$('#fDlvAt').value, delivered_at: $('#fDlvAt').value || null
+    delivered: !!$('#fDlvAt').value, delivered_at: $('#fDlvAt').value || null,
+    deal_no: $('#fDealNo').value.trim().toUpperCase() || null, contract_no: $('#fContract').value.trim() || null, vin: $('#fVin').value.trim().toUpperCase() || null,
+    delivery_region: $('#fRegion').value || '', delivery_detail: $('#fRegionDetail').value.trim() || null
   };
 }
 function pctOk(v){ return v==='' || (Number(v)>=0 && Math.abs(Number(v)*10 - Math.round(Number(v)*10)) < 1e-9); }
@@ -1572,6 +1609,8 @@ async function saveDeal(){
   need(r.confirm_date, $('#fDate'), '펀딩진행일자');
   if(isAdmin()){ need($('#fTotPct').value!=='', $('#fTotPct'), '총인센티브'); need($('#fPayPct').value!=='', $('#fPayPct'), '지급예정인센티브'); need($('#fCorpPct').value!=='', $('#fCorpPct'), '법인수익인센티브'); }
   if(miss.length){ alert('필수 항목을 입력하세요.\n\n· ' + miss.join('\n· ')); return; }
+  if(r.deal_no && S.deals.some(x => x.id!==S.editId && (x.deal_no||'').toUpperCase()===r.deal_no)){ $('#fDealNo').classList.add('bad'); alert(`이미 등록된 견적번호(딜)입니다.\n\n입력값: ${r.deal_no}`); $('#fDealNo').focus(); return; }
+  if(r.vin && r.vin.length !== 17){ $('#fVin').classList.add('bad'); alert(`차대번호 자리수를 다시 확인하세요.\n\n입력값: ${r.vin}\n현재 ${r.vin.length}자리 / 기준 17자리`); $('#fVin').focus(); return; }
   if(isAdmin()){
     const bad = [['#fTotPct','총인센티브'],['#fPayPct','지급예정인센티브'],['#fCorpPct','법인수익인센티브'],['#fPromoPct','프로모션(%)'],['#fSlidePct','슬라이딩(%)']].filter(([id]) => !pctOk($(id).value));
     if(bad.length){ bad.forEach(([id])=>$(id).classList.add('bad')); alert('인센티브(%)는 0.1 단위로 입력하세요.\n\n· ' + bad.map(b=>b[1]).join('\n· ')); return; }
@@ -1590,10 +1629,10 @@ async function saveDeal(){
     const row = { ...r, ga_id:gaId };
     let id = S.editId;
     if(id) await DB.update('deals', id, row);
-    else { const ins = await DB.insert('deals', { ...row, delivery_region:'', accessories:'', settled:false, settled_at:null, ins_ok:false, ins_at:null, created_by_email:S.me?.email||null }); id = ins.id; }
+    else { const ins = await DB.insert('deals', { ...row, accessories:'', settled:false, settled_at:null, ins_ok:false, ins_at:null, created_by_email:S.me?.email||null }); id = ins.id; }
     if(isAdmin()){
       const pv = id2 => $(id2).value==='' ? null : Math.round(Number($(id2).value)*10)/10, apprs = readRows('#apprRows');
-      await DB.upsert('deal_incentives', { deal_id:id, total_pct:pv('#fTotPct'), pay_pct:pv('#fPayPct'), corp_pct:pv('#fCorpPct'),
+      await DB.upsert('deal_incentives', { deal_id:id, settle_method: segVal('fSettle')==='3.3% 공제' ? '3.3% 공제' : '계산서 발행', total_pct:pv('#fTotPct'), pay_pct:pv('#fPayPct'), corp_pct:pv('#fCorpPct'),
         promo_name:selName('#fPromoSel'), promo_pct:pv('#fPromoPct'), promo_amt:$('#fPromoAmt').value===''?null:num($('#fPromoAmt').value),
         sliding_name:selName('#fSlideSel'), sliding_pct:pv('#fSlidePct'), sliding_amt:null,
         approvals:apprs, approval_amt:apprs.reduce((a,x)=>a+x.amt,0) || null, approval_reason:apprs.map(x=>x.name).filter(Boolean).join(' / ') || null,
@@ -1694,23 +1733,39 @@ function renderList(){
     const sh = x => x.slice(2).replace(/-/g,'.');   // 리스트에서는 yy.mm.dd 로 짧게 표시 (전체 날짜는 마우스를 올리면 표시)
     return `<div class="mat" title="${m?'계약 만기일 '+m:''}${e?' / 해지감면 만기일 '+e:''}">${m?`계약<b>${sh(m)}</b><span class="dd">${dday(m)}</span>`:''}${e?`${m?'<br>':''}해지<b>${sh(e)}</b><span class="dd">${dday(e)}</span>`:''}</div>`;
   };
+  // 인센티브 칸 : % → 정산기준 차량가 기준 금액 (법인 수익 인센 = VAT 별도 / 3.3% 공제 건은 프로모션·슬라이딩 입금액 차감)
+  const pctLb = v => `<span class="p">${v}%</span>`;
+  const incCell = (d, k, none) => { const i = S.inc[d.id]; return i?.[k]!=null ? pctLb(i[k]) + `<b>${fmt(incAmt(d,k))}</b>` : `<span class="eq">${none}</span>`; };
+  const corpCell = d => { const i = S.inc[d.id]; if(i?.corp_pct==null) return '<span class="eq">-</span>';
+    return pctLb(i.corp_pct) + `<span class="s">${fmt(incAmt(d,'corp_pct'))} + VAT ${fmt(corpVat(d))}</span><b>= ${fmt(corpIn(d))}</b><span class="tag b">VAT 별도 · 발행</span>`; };
+  const expCell = (d, amt, inn, pct, fix, name) => { if(!amt) return '<span class="eq">-</span>';
+    const lb = [Number(pct) ? pct+'%' : '', num(fix) ? '정액 '+fmt(fix) : ''].filter(Boolean).join(' + ');
+    return `<span class="p" title="${esc(name||'')}">${lb}</span>` + (settleOf(d)==='3.3% 공제' ? `<span class="s">${fmt(amt)} − 3.3% ${fmt(amt-inn)}</span><b>= ${fmt(inn)}</b><span class="tag o">3.3% 공제</span>` : `<b>${fmt(amt)}</b><span class="tag">VAT 포함 · 발행 없음</span>`); };
+  const sum = fn => rows.reduce((a,d)=>a+fn(d),0);
   $('#lTable').innerHTML = `<table>
-    <thead><tr><th class="c"><input type="checkbox" id="chkAll" style="height:auto" title="전체 선택"></th><th>확정일</th><th>고객명</th><th class="c">자료</th><th>연락처</th><th>유형</th><th>차량명</th><th>계약</th><th>만기일</th><th>구분</th><th>GA 업체</th><th>담당</th><th class="n">취득원가</th>
-      ${adm?'<th class="n inc-col">총인센</th><th class="n inc-col">지급인센</th><th class="n inc-col">법인수익</th>':''}<th class="c pin c0">서류</th><th class="c pin c1">인도</th><th class="c pin c2">정산</th><th class="c pin c3">보험증명서<br>(리스)</th><th class="c pin c4">${adm?'상태 저장 · 관리':'서류'}</th></tr></thead>
-    <tbody>${shown.map(d=>{ const i = S.inc[d.id]; const pend = !!S.pendSt[d.id]; return `<tr class="${pend?'pend':''}" onclick="rowOpen(event,${d.id})" title="클릭 시 확정 등록 화면 열기">
-      <td class="c"><input type="checkbox" class="rowchk" data-id="${d.id}" style="height:auto" ${S.listSel.has(d.id)?'checked':''}></td>
-      <td>${d.confirm_date}</td><td><b>${esc(d.customer_name)}</b></td>
+    <thead><tr><th class="c"><input type="checkbox" id="chkAll" style="height:auto" title="전체 선택"></th><th class="c">No</th><th>확정 날짜</th><th>견적번호(딜)</th><th>고객명</th><th class="c">자료</th><th>연락처</th><th>캐피탈사</th><th>유형</th><th>차종</th><th>차량 계약번호</th><th>차대번호</th><th>계약</th><th>만기일</th><th class="n">취득원가</th>
+      ${adm?'<th>정산 방식</th><th class="n inc-col">총 인센</th><th class="n inc-col">법인 수익 인센</th><th class="n inc-col">지급 인센</th><th class="n inc-col">해당 월 프로모션</th><th class="n inc-col">슬라이딩</th><th class="n inc-col">법인 순수익</th>':''}<th>구분</th><th>GA 업체명</th><th>담당 직원</th><th>탁송지</th><th class="c pin c0">서류</th><th class="c pin c1">인도</th><th class="c pin c2">정산</th><th class="c pin c3">보험증명서<br>(리스)</th><th class="c pin c4">${adm?'상태 저장 · 관리':'서류'}</th></tr></thead>
+    <tbody>${shown.map((d,n)=>{ const i = S.inc[d.id]; const pend = !!S.pendSt[d.id]; const net = netAmt(d); return `<tr class="${pend?'pend':''}" onclick="rowOpen(event,${d.id})" title="클릭 시 확정 등록 화면 열기">
+      <td class="c"><input type="checkbox" class="rowchk" data-id="${d.id}" style="height:auto" ${S.listSel.has(d.id)?'checked':''}></td><td class="c">${n+1}</td>
+      <td>${d.confirm_date}</td><td>${d.deal_no ? esc(d.deal_no) : '<span class="eq">-</span>'}</td><td><b>${esc(d.customer_name)}</b></td>
       <td class="c">${S.attCount[d.id]?`<button class="btn s att imgbtn" onclick="openViewer(${d.id})" title="저장된 자료 ${S.attCount[d.id]}개 보기 (← → 로 넘기기)">${IMG}<b>${S.attCount[d.id]}</b></button>`:`<span class="imgbtn none" title="저장된 자료 없음">${IMG}<b>0</b></span>`}</td>
-      <td>${esc(d.phone||'')}</td>
+      <td>${esc(d.phone||'')}</td><td>${esc(capName(d.capital_id)||'-')}</td>
       <td>${d.product?`<span class="tag ${isLease(d)?'k':'b'}">${d.product}</span>`:'<span class="eq">-</span>'}</td><td>${esc(d.car_model||'')}</td>
+      <td>${d.contract_no ? esc(d.contract_no) : '<span class="eq">-</span>'}</td><td>${d.vin ? esc(d.vin) : '<span class="eq">-</span>'}</td>
       <td>${d.contract_months ? d.contract_months+'개월' : '<span class="eq">-</span>'}${d.early_type?` <span class="tag o">해지감면 ${d.early_type}</span>`:''}</td><td>${matCell(d)}</td>
-      <td>${d.channel==='직영업'?'<span class="tag k">직영업</span>':'<span class="tag b">GA</span>'}</td><td>${esc(d.channel==='직영업'?'-':gaName(d.ga_id)||'-')}</td><td>${esc(staffName(d.staff_id)||'-')}</td>
       <td class="n">${fmt(d.acq_cost)}</td>
-      ${adm?`<td class="n inc-col" title="${i?.total_pct??''}%">${i?.total_pct!=null?fmt(incAmt(d,'total_pct')):'<span class="eq">미입력</span>'}</td><td class="n inc-col" title="${i?.pay_pct??''}%">${i?.pay_pct!=null?fmt(incAmt(d,'pay_pct')):'-'}</td><td class="n inc-col" title="${i?.corp_pct??''}%">${i?.corp_pct!=null?fmt(incAmt(d,'corp_pct')):'-'}</td>`:''}
+      ${adm?`<td>${i ? `<span class="tag ${settleOf(d)==='3.3% 공제'?'o':''}">${settleOf(d)}</span>` : '<span class="eq">-</span>'}</td>
+      <td class="n inc-col ic">${incCell(d,'total_pct','미입력')}</td><td class="n inc-col ic">${corpCell(d)}</td><td class="n inc-col ic">${incCell(d,'pay_pct','-')}</td>
+      <td class="n inc-col ic">${expCell(d, promoAmt(d), promoIn(d), i?.promo_pct, i?.promo_amt, i?.promo_name)}</td><td class="n inc-col ic">${expCell(d, slideAmt(d), slideIn(d), i?.sliding_pct, i?.sliding_amt, i?.sliding_name)}</td>
+      <td class="n inc-col ${net<0?'neg':''}">${i ? `<b>${fmt(net)}원</b>` : '<span class="eq">-</span>'}</td>`:''}
+      <td>${d.channel==='직영업'?'<span class="tag k">직영업</span>':'<span class="tag b">GA</span>'}</td><td>${esc(d.channel==='직영업'?'-':gaName(d.ga_id)||'-')}</td><td>${esc(staffName(d.staff_id)||'-')}</td>
+      <td>${esc([d.delivery_region, d.delivery_detail].filter(Boolean).join(' ') || '-')}</td>
       <td class="c pin c0">${S.attCount[d.id] ? '<span class="eq">-</span>' : `<button class="st off" onclick="openDocs(${d.id})" title="클릭 시 이 확정건의 서류 등록 화면으로 이동">서류미등록</button>`}</td>
       <td class="c pin c1">${dlvCell(d)}</td><td class="c pin c2">${stBtn(d,'stl')}</td><td class="c pin c3">${stBtn(d,'ins')}</td>
       <td class="c pin c4"><div class="acts">${adm?`<button class="btn s ${pend?'p':''}" onclick="saveStatus(${d.id})" ${pend?'':'disabled'}>저장</button><button class="btn s" onclick="editDeal(${d.id})">수정</button><button class="btn s r" onclick="delDeal(${d.id})">삭제</button>`:`<button class="btn s" onclick="openDocs(${d.id})">서류 등록</button>`}</div></td></tr>`; }).join('')}</tbody>
-    <tfoot><tr><td colspan="12">합계 ${rows.length.toLocaleString()}건</td><td class="n">${fmt(sAcq)}</td>${adm?`<td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'total_pct'),0))}</td><td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'pay_pct'),0))}</td><td class="n">${fmt(rows.reduce((a,d)=>a+incAmt(d,'corp_pct'),0))}</td>`:''}<td class="pin c0"></td><td class="pin c1"></td><td class="pin c2"></td><td class="pin c3"></td><td class="pin c4"></td></tr></tfoot></table>`;
+    <tfoot><tr><td colspan="14">${rows.length.toLocaleString()}건 합계</td><td class="n">${fmt(sAcq)}</td>${adm?`<td></td><td class="n">${fmt(sum(d=>incAmt(d,'total_pct')))}</td>
+      <td class="n">${fmt(sum(d=>incAmt(d,'corp_pct')))}<small>입금액 ${fmt(sum(corpIn))}</small></td><td class="n">${fmt(sum(d=>incAmt(d,'pay_pct')))}</td>
+      <td class="n">${fmt(sum(promoAmt))}<small>입금액 ${fmt(sum(promoIn))}</small></td><td class="n">${fmt(sum(slideAmt))}<small>입금액 ${fmt(sum(slideIn))}</small></td><td class="n">${fmt(sum(netAmt))}</td>`:''}<td colspan="4"></td><td class="pin c0"></td><td class="pin c1"></td><td class="pin c2"></td><td class="pin c3"></td><td class="pin c4"></td></tr></tfoot></table>`;
   $$('#lTable .rowchk').forEach(c => c.onchange = () => { const id = +c.dataset.id; if(c.checked) S.listSel.add(id); else S.listSel.delete(id); syncSel(); });
   $('#chkAll').onchange = () => { const on = $('#chkAll').checked; shown.forEach(d => on ? S.listSel.add(d.id) : S.listSel.delete(d.id)); renderList(); };
   syncSel();
@@ -1755,14 +1810,14 @@ async function delDeal(id){
 }
 function dealRowsForExcel(list){
   const adm = isAdmin();
-  const head = ['펀딩진행일자(확정일)','고객명','연락처','금융사','펀딩유형','차량명','외장색상','내장색상','차량가','차량옵션','최종차량가','정산기준차량가','계약개월수','해지감면','선수/보증금','약정주행거리(km)','렌트/리스료','인도예정일','인도완료일','계약만기일','해지감면만기일','유입구분','GA업체명','담당자',
-    ...(adm?['총인센티브(%)','총인센티브(원)','지급예정인센티브(%)','지급예정인센티브(원)','법인수익인센티브(%)','법인수익인센티브(원)','대리점수당','대리점출고','프로모션명','프로모션(%)','프로모션(원 입력)','프로모션 금액','슬라이딩명','슬라이딩(%)','슬라이딩 금액','품의 금액','품의 내역','지출 합계','법인 순이익']:[]),
+  const head = ['펀딩진행일자(확정일)','견적번호(딜)','고객명','연락처','금융사','펀딩유형','차량명','차량계약번호','차대번호','외장색상','내장색상','차량가','차량옵션','최종차량가','정산기준차량가','계약개월수','해지감면','선수/보증금','약정주행거리(km)','렌트/리스료','인도예정일','인도완료일','계약만기일','해지감면만기일','유입구분','GA업체명','담당자','탁송지',
+    ...(adm?['정산방식','총인센티브(%)','총인센티브(원)','지급예정인센티브(%)','지급예정인센티브(원)','법인수익인센티브(%)','법인수익인센티브(원)','법인수익인센티브 VAT','법인수익인센티브 입금액(VAT포함)','대리점수당','대리점출고','프로모션명','프로모션(%)','프로모션(원 입력)','프로모션 금액','프로모션 입금액','슬라이딩명','슬라이딩(%)','슬라이딩 금액','슬라이딩 입금액','품의 금액','품의 내역','지출 합계','법인 순이익']:[]),
     '인도','정산','정산일','보험증명서회신','회신일','첨부자료수','메모','등록자'];
-  const rows = list.map(d => { const i = S.inc[d.id] || {}, t = d.terms || {}, opts = t.options || []; return [d.confirm_date, d.customer_name, d.phone||'', capName(d.capital_id), d.product||'', d.car_model||'', t.ext_color||'', t.int_color||'',
+  const rows = list.map(d => { const i = S.inc[d.id] || {}, t = d.terms || {}, opts = t.options || []; return [d.confirm_date, d.deal_no||'', d.customer_name, d.phone||'', capName(d.capital_id), d.product||'', d.car_model||'', d.contract_no||'', d.vin||'', t.ext_color||'', t.int_color||'',
     num(t.car_price)||'', opts.map(o=>`${o.name||''} ${fmt(o.amt)}`).join(' / '), (num(t.car_price)+opts.reduce((a,o)=>a+num(o.amt),0))||'', num(d.acq_cost),
     d.contract_months||'', d.early_type||'', num(t.dep_amt) ? `${t.dep_type||''} ${fmt(t.dep_amt)}` : '', num(t.mileage_km)||'', num(t.monthly_fee)||'', t.dlv_plan||'', d.delivered_at||'', matDate(d)||'', earlyDate(d)||'',
-    d.channel, d.channel==='직영업'?'':gaName(d.ga_id), staffName(d.staff_id),
-    ...(adm?[i.total_pct??'', incAmt(d,'total_pct')||'', i.pay_pct??'', incAmt(d,'pay_pct')||'', i.corp_pct??'', incAmt(d,'corp_pct')||'', dealerAmt(d)||'', i.dealer_release?'대리점출고':'', i.promo_name||'', i.promo_pct??'', i.promo_amt??'', promoAmt(d)||'', i.sliding_name||'', i.sliding_pct??'', slideAmt(d)||'', apprAmt(d)||'',
+    d.channel, d.channel==='직영업'?'':gaName(d.ga_id), staffName(d.staff_id), [d.delivery_region, d.delivery_detail].filter(Boolean).join(' '),
+    ...(adm?[S.inc[d.id] ? settleOf(d) : '', i.total_pct??'', incAmt(d,'total_pct')||'', i.pay_pct??'', incAmt(d,'pay_pct')||'', i.corp_pct??'', incAmt(d,'corp_pct')||'', corpVat(d)||'', corpIn(d)||'', dealerAmt(d)||'', i.dealer_release?'대리점출고':'', i.promo_name||'', i.promo_pct??'', i.promo_amt??'', promoAmt(d)||'', promoIn(d)||'', i.sliding_name||'', i.sliding_pct??'', slideAmt(d)||'', slideIn(d)||'', apprAmt(d)||'',
       (Array.isArray(i.approvals)&&i.approvals.length ? i.approvals.map(a=>`${a.name||''} ${fmt(a.amt)}`).join(' / ') : (i.approval_reason||'')), expAmt(d)||'', netAmt(d)]:[]),
     d.delivered?'완료':'미완료', d.settled?'완료':'미완료', d.settled_at||'', isLease(d)?(d.ins_ok?'회신':'미회신'):'-', d.ins_at||'', S.attCount[d.id]||0, d.memo||'', staffByEmail(d.created_by_email)]; });
   return [head, ...rows];
