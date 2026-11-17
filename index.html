@@ -159,20 +159,16 @@ tr.pend td{background:var(--blue-l)!important}
 .imgbtn.none{color:var(--gray-l);font-size:12px}
 #lTable table{font-size:12.5px}
 #lTable th,#lTable td{padding-left:5px;padding-right:5px}
-/* 인도·정산·보험증명서·저장/관리 열은 우측 고정 (가로 스크롤해도 항상 보임) */
+/* 저장/관리 열만 우측 고정 (서류·인도·정산·보험증명서는 가로 스크롤에 포함) */
 #lTable .pin{position:sticky;box-sizing:border-box}
-#lTable .pin.c0,#lTable .pin.c1,#lTable .pin.c2,#lTable .pin.c3{width:88px;min-width:88px;max-width:88px;padding-left:2px;padding-right:2px}
-#lTable .pin.c4{width:164px;min-width:164px;max-width:164px;right:0}
-#lTable .pin.c3{right:164px}
-#lTable .pin.c2{right:252px}
-#lTable .pin.c1{right:340px;width:132px;min-width:132px;max-width:132px}
-#lTable .pin.c0{right:472px;box-shadow:-1px 0 0 var(--line)}
+#lTable .pin.c4{width:164px;min-width:164px;max-width:164px;right:0;box-shadow:-1px 0 0 var(--line)}
+#lTable .c0,#lTable .c1,#lTable .c2,#lTable .c3{padding-left:8px;padding-right:8px}
 #lTable tbody tr{cursor:pointer}
-#lTable td.ic{line-height:1.45}
-#lTable .ic .p{display:block;font-size:11px;font-weight:800;color:var(--gray)}
-#lTable .ic .s{display:block;font-size:11px;color:var(--gray)}
-#lTable .ic b{display:block}
-#lTable .ic .tag{margin-top:3px;font-size:10px;padding:2px 6px}
+#lTable .ic .t,#lTable .ic b,#lTable .ic .g{display:block;height:20px;line-height:20px}
+#lTable .ic .t{font-size:11px;color:var(--gray)}
+#lTable .ic .t i{font-style:normal;font-weight:800}
+#lTable .ic .tag{font-size:10px;line-height:1.3;padding:2px 6px;vertical-align:middle}
+#lTable tfoot td{vertical-align:top}
 #lTable tfoot small{display:block;font-size:11px;font-weight:700;color:var(--gray)}
 .dlvin{height:26px;width:104px;font-size:11px;padding:0 4px}
 .mat{font-size:11.5px;line-height:1.55;color:var(--gray)}
@@ -196,7 +192,7 @@ tr.pend td{background:var(--blue-l)!important}
 .ohelp{font-size:11px;color:var(--gray);width:100%;line-height:1.6}
 #lTable tbody td.pin{background:#fff}
 #lTable tbody tr:hover td.pin{background:#fbfcff}
-#lTable .pin .st{padding:0 8px}
+#lTable .st{padding:0 8px}
 .fchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
 .fchips .lb{font-size:12px;color:var(--gray);font-weight:700;margin-right:4px}
 .fchip{height:32px;padding:0 14px;border-radius:16px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:12px;font-weight:800;cursor:pointer;color:var(--ink)}
@@ -1734,17 +1730,19 @@ function renderList(){
     return `<div class="mat" title="${m?'계약 만기일 '+m:''}${e?' / 해지감면 만기일 '+e:''}">${m?`계약<b>${sh(m)}</b><span class="dd">${dday(m)}</span>`:''}${e?`${m?'<br>':''}해지<b>${sh(e)}</b><span class="dd">${dday(e)}</span>`:''}</div>`;
   };
   // 인센티브 칸 : % → 정산기준 차량가 기준 금액 (법인 수익 인센 = VAT 별도 / 3.3% 공제 건은 프로모션·슬라이딩 입금액 차감)
-  const pctLb = v => `<span class="p">${v}%</span>`;
-  const incCell = (d, k, none) => { const i = S.inc[d.id]; return i?.[k]!=null ? pctLb(i[k]) + `<b>${fmt(incAmt(d,k))}</b>` : `<span class="eq">${none}</span>`; };
-  const corpCell = d => { const i = S.inc[d.id]; if(i?.corp_pct==null) return '<span class="eq">-</span>';
-    return pctLb(i.corp_pct) + `<span class="s">${fmt(incAmt(d,'corp_pct'))} + VAT ${fmt(corpVat(d))}</span><b>= ${fmt(corpIn(d))}</b><span class="tag b">VAT 별도 · 발행</span>`; };
-  const expCell = (d, amt, inn, pct, fix, name) => { if(!amt) return '<span class="eq">-</span>';
-    const lb = [Number(pct) ? pct+'%' : '', num(fix) ? '정액 '+fmt(fix) : ''].filter(Boolean).join(' + ');
-    return `<span class="p" title="${esc(name||'')}">${lb}</span>` + (settleOf(d)==='3.3% 공제' ? `<span class="s">${fmt(amt)} − 3.3% ${fmt(amt-inn)}</span><b>= ${fmt(inn)}</b><span class="tag o">3.3% 공제</span>` : `<b>${fmt(amt)}</b><span class="tag">VAT 포함 · 발행 없음</span>`); };
+  // 모든 인센티브 칸을 3줄(윗줄 %·계산내역 / 금액 / 표시)로 맞춰 금액이 항상 같은 높이에 오도록 함
+  const ic3 = (top, main, tag) => `<span class="t">${top||''}</span><b>${main}</b><span class="g">${tag||''}</span>`;
+  const none3 = txt => ic3('', `<span class="eq" style="font-weight:400">${txt}</span>`, '');
+  const incCell = (d, k, none) => { const i = S.inc[d.id]; return i?.[k]!=null ? ic3(`<i>${i[k]}%</i>`, fmt(incAmt(d,k)), '') : none3(none); };
+  const corpCell = d => { const i = S.inc[d.id]; if(i?.corp_pct==null) return none3('-');
+    return ic3(`<i>${i.corp_pct}%</i> · ${fmt(incAmt(d,'corp_pct'))} + VAT ${fmt(corpVat(d))}`, '= '+fmt(corpIn(d)), '<span class="tag b">VAT 별도 · 발행</span>'); };
+  const expCell = (d, amt, inn, pct, fix, name) => { if(!amt) return none3('-');
+    const lb = `<i title="${esc(name||'')}">${[Number(pct) ? pct+'%' : '', num(fix) ? '정액 '+fmt(fix) : ''].filter(Boolean).join(' + ')}</i>`;
+    return settleOf(d)==='3.3% 공제' ? ic3(`${lb} · ${fmt(amt)} − 3.3% ${fmt(amt-inn)}`, '= '+fmt(inn), '<span class="tag o">3.3% 공제</span>') : ic3(lb, fmt(amt), '<span class="tag">VAT 포함 · 발행 없음</span>'); };
   const sum = fn => rows.reduce((a,d)=>a+fn(d),0);
   $('#lTable').innerHTML = `<table>
     <thead><tr><th class="c"><input type="checkbox" id="chkAll" style="height:auto" title="전체 선택"></th><th class="c">No</th><th>확정 날짜</th><th>견적번호(딜)</th><th>고객명</th><th class="c">자료</th><th>연락처</th><th>캐피탈사</th><th>유형</th><th>차종</th><th>차량 계약번호</th><th>차대번호</th><th>계약</th><th>만기일</th><th class="n">취득원가</th>
-      ${adm?'<th>정산 방식</th><th class="n inc-col">총 인센</th><th class="n inc-col">법인 수익 인센</th><th class="n inc-col">지급 인센</th><th class="n inc-col">해당 월 프로모션</th><th class="n inc-col">슬라이딩</th><th class="n inc-col">법인 순수익</th>':''}<th>구분</th><th>GA 업체명</th><th>담당 직원</th><th>탁송지</th><th class="c pin c0">서류</th><th class="c pin c1">인도</th><th class="c pin c2">정산</th><th class="c pin c3">보험증명서<br>(리스)</th><th class="c pin c4">${adm?'상태 저장 · 관리':'서류'}</th></tr></thead>
+      ${adm?'<th>정산 방식</th><th class="n inc-col">총 인센</th><th class="n inc-col">법인 수익 인센</th><th class="n inc-col">지급 인센</th><th class="n inc-col">해당 월 프로모션</th><th class="n inc-col">슬라이딩</th><th class="n inc-col">법인 순수익</th>':''}<th>구분</th><th>GA 업체명</th><th>담당 직원</th><th>탁송지</th><th class="c c0">서류</th><th class="c c1">인도</th><th class="c c2">정산</th><th class="c c3">보험증명서<br>(리스)</th><th class="c pin c4">${adm?'상태 저장 · 관리':'서류'}</th></tr></thead>
     <tbody>${shown.map((d,n)=>{ const i = S.inc[d.id]; const pend = !!S.pendSt[d.id]; const net = netAmt(d); return `<tr class="${pend?'pend':''}" onclick="rowOpen(event,${d.id})" title="클릭 시 확정 등록 화면 열기">
       <td class="c"><input type="checkbox" class="rowchk" data-id="${d.id}" style="height:auto" ${S.listSel.has(d.id)?'checked':''}></td><td class="c">${n+1}</td>
       <td>${d.confirm_date}</td><td>${d.deal_no ? esc(d.deal_no) : '<span class="eq">-</span>'}</td><td><b>${esc(d.customer_name)}</b></td>
@@ -1757,15 +1755,15 @@ function renderList(){
       ${adm?`<td>${i ? `<span class="tag ${settleOf(d)==='3.3% 공제'?'o':''}">${settleOf(d)}</span>` : '<span class="eq">-</span>'}</td>
       <td class="n inc-col ic">${incCell(d,'total_pct','미입력')}</td><td class="n inc-col ic">${corpCell(d)}</td><td class="n inc-col ic">${incCell(d,'pay_pct','-')}</td>
       <td class="n inc-col ic">${expCell(d, promoAmt(d), promoIn(d), i?.promo_pct, i?.promo_amt, i?.promo_name)}</td><td class="n inc-col ic">${expCell(d, slideAmt(d), slideIn(d), i?.sliding_pct, i?.sliding_amt, i?.sliding_name)}</td>
-      <td class="n inc-col ${net<0?'neg':''}">${i ? `<b>${fmt(net)}원</b>` : '<span class="eq">-</span>'}</td>`:''}
+      <td class="n inc-col ic ${net<0?'neg':''}">${i ? ic3('', fmt(net)+'원', '') : none3('-')}</td>`:''}
       <td>${d.channel==='직영업'?'<span class="tag k">직영업</span>':'<span class="tag b">GA</span>'}</td><td>${esc(d.channel==='직영업'?'-':gaName(d.ga_id)||'-')}</td><td>${esc(staffName(d.staff_id)||'-')}</td>
       <td>${esc([d.delivery_region, d.delivery_detail].filter(Boolean).join(' ') || '-')}</td>
-      <td class="c pin c0">${S.attCount[d.id] ? '<span class="eq">-</span>' : `<button class="st off" onclick="openDocs(${d.id})" title="클릭 시 이 확정건의 서류 등록 화면으로 이동">서류미등록</button>`}</td>
-      <td class="c pin c1">${dlvCell(d)}</td><td class="c pin c2">${stBtn(d,'stl')}</td><td class="c pin c3">${stBtn(d,'ins')}</td>
+      <td class="c c0">${S.attCount[d.id] ? '<span class="eq">-</span>' : `<button class="st off" onclick="openDocs(${d.id})" title="클릭 시 이 확정건의 서류 등록 화면으로 이동">서류미등록</button>`}</td>
+      <td class="c c1">${dlvCell(d)}</td><td class="c c2">${stBtn(d,'stl')}</td><td class="c c3">${stBtn(d,'ins')}</td>
       <td class="c pin c4"><div class="acts">${adm?`<button class="btn s ${pend?'p':''}" onclick="saveStatus(${d.id})" ${pend?'':'disabled'}>저장</button><button class="btn s" onclick="editDeal(${d.id})">수정</button><button class="btn s r" onclick="delDeal(${d.id})">삭제</button>`:`<button class="btn s" onclick="openDocs(${d.id})">서류 등록</button>`}</div></td></tr>`; }).join('')}</tbody>
     <tfoot><tr><td colspan="14">${rows.length.toLocaleString()}건 합계</td><td class="n">${fmt(sAcq)}</td>${adm?`<td></td><td class="n">${fmt(sum(d=>incAmt(d,'total_pct')))}</td>
       <td class="n">${fmt(sum(d=>incAmt(d,'corp_pct')))}<small>입금액 ${fmt(sum(corpIn))}</small></td><td class="n">${fmt(sum(d=>incAmt(d,'pay_pct')))}</td>
-      <td class="n">${fmt(sum(promoAmt))}<small>입금액 ${fmt(sum(promoIn))}</small></td><td class="n">${fmt(sum(slideAmt))}<small>입금액 ${fmt(sum(slideIn))}</small></td><td class="n">${fmt(sum(netAmt))}</td>`:''}<td colspan="4"></td><td class="pin c0"></td><td class="pin c1"></td><td class="pin c2"></td><td class="pin c3"></td><td class="pin c4"></td></tr></tfoot></table>`;
+      <td class="n">${fmt(sum(promoAmt))}<small>입금액 ${fmt(sum(promoIn))}</small></td><td class="n">${fmt(sum(slideAmt))}<small>입금액 ${fmt(sum(slideIn))}</small></td><td class="n">${fmt(sum(netAmt))}</td>`:''}<td colspan="4"></td><td class="c0"></td><td class="c1"></td><td class="c2"></td><td class="c3"></td><td class="pin c4"></td></tr></tfoot></table>`;
   $$('#lTable .rowchk').forEach(c => c.onchange = () => { const id = +c.dataset.id; if(c.checked) S.listSel.add(id); else S.listSel.delete(id); syncSel(); });
   $('#chkAll').onchange = () => { const on = $('#chkAll').checked; shown.forEach(d => on ? S.listSel.add(d.id) : S.listSel.delete(d.id)); renderList(); };
   syncSel();
