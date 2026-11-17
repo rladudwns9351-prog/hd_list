@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>GA 확정리스트 | 로드온 모빌리티</title>
+<title>대출확정리스트 | 로드온 모빌리티</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -405,7 +405,7 @@ tr.warn td{background:var(--orange-l)!important}
 <div id="vLogin" class="auth hidden">
   <div class="auth-box">
     <div class="brand">로드온 모빌리티</div>
-    <h2 id="authTitle">GA 확정리스트</h2>
+    <h2 id="authTitle">대출확정리스트</h2>
     <div class="f">아이디<input id="aId" placeholder="예) R001" autocomplete="username" autocapitalize="characters" spellcheck="false" maxlength="10" style="text-transform:uppercase"></div>
     <div class="f">비밀번호
       <div class="pwwrap"><input id="aPw" type="password" placeholder="대소문자 구분 · 첫 로그인은 아이디와 동일" autocomplete="current-password"><button type="button" class="pwbtn" id="aPwShow" tabindex="-1">보기</button></div>
@@ -436,7 +436,7 @@ tr.warn td{background:var(--orange-l)!important}
 <!-- ================= APP ================= -->
 <div id="vApp" class="hidden">
   <aside class="side">
-    <div class="logo"><div class="t1">로드온 모빌리티</div><div class="t2">GA 확정리스트</div></div>
+    <div class="logo"><div class="t1">로드온 모빌리티</div><div class="t2">대출확정리스트</div></div>
     <nav class="nav" id="nav">
       <a data-p="dash" class="on"><span class="ic">■</span>대시보드</a>
       <div class="nav-sep"></div>
@@ -693,11 +693,12 @@ tr.warn td{background:var(--orange-l)!important}
               <label class="f">재직<select id="mbActF"><option value="all">전체</option><option value="on">재직</option><option value="off">퇴사</option></select></label>
               <button class="btn k" onclick="renderMembers()">조회</button>
               <div class="sp"></div>
+              <button class="btn" onclick="resetStaffSeq()" title="다음 아이디를 현재 등록된 마지막 번호 다음으로 되돌림">아이디 번호 초기화</button>
               <button class="btn p" onclick="openStaffForm()">＋ 직원 등록</button>
             </div>
             <h3 style="margin-bottom:10px"><span>TOTAL <span id="mbTotal" style="color:var(--blue)">0</span></span><small id="mbCount"></small></h3>
             <div class="tw" id="mbTable"></div>
-            <p class="note">· 아이디는 R000부터 등록 순서대로 자동 부여 (삭제된 번호는 다시 쓰지 않음) · 사용여부 Off = 즉시 로그아웃·로그인 불가 (담당자 명단에는 유지) · 퇴사 처리 = 로그인 불가 + 담당자 선택 목록에서 제외<br>· 본인 계정의 권한·사용여부·재직상태는 변경할 수 없습니다. · 초기 비밀번호 = 아이디 (첫 로그인 시 본인 변경 필수) · 비밀번호 분실 시 [수정] → [비밀번호 초기화]</p>
+            <p class="note">· 아이디는 R000부터 등록 순서대로 자동 부여 (삭제된 번호는 건너뜀 → [아이디 번호 초기화] 시 마지막 번호 다음부터 다시 부여) · 사용여부 Off = 즉시 로그아웃·로그인 불가 (담당자 명단에는 유지) · 퇴사 처리 = 로그인 불가 + 담당자 선택 목록에서 제외<br>· 본인 계정의 권한·사용여부·재직상태는 변경할 수 없습니다. · 초기 비밀번호 = 아이디 (첫 로그인 시 본인 변경 필수) · 비밀번호 분실 시 [수정] → [비밀번호 초기화]</p>
           </div>
         </div>
 
@@ -1068,9 +1069,10 @@ async function submitAuth(){
         await SEC.log('NO_PERMISSION', email, '사용 중지 계정 로그인 시도');
         $('#aMsg').textContent = '사용이 중지된 아이디입니다. 관리자에게 문의하세요.'; return;
       }
-      const r = await SEC.log('LOGIN_FAIL', email, '비밀번호 오류 또는 미등록 아이디');
+      const cred = /invalid login credentials/i.test(error.message);   // 아이디·비밀번호 불일치 외 오류는 원문 표시 (서버 설정 확인용)
+      const r = await SEC.log('LOGIN_FAIL', email, cred ? '비밀번호 오류 또는 미등록 아이디' : ('서버 오류 : ' + error.message).slice(0,200));
       if(r.blocked) return showBlock('로그인 연속 실패로 이 IP의 접속이 차단되었습니다.', id);
-      $('#aMsg').textContent = `아이디 또는 비밀번호가 올바르지 않습니다.${r.fails?` (${r.fails}/5회 · 5회 실패 시 차단)`:''}`;
+      $('#aMsg').textContent = cred ? `아이디 또는 비밀번호가 올바르지 않습니다.${r.fails?` (${r.fails}/5회 · 5회 실패 시 차단)`:''}` : `로그인 오류 : ${error.message} (관리자에게 이 문구를 전달하세요)`;
       return;
     }
     S.user = data.user; S.loginPw = pw; sessionStorage.setItem('ga_logged','1');
@@ -1895,7 +1897,7 @@ function exportSelExcel(){
   const aoa = dealRowsForExcel(list), wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = aoa[0].map(h => ({ wch: Math.max(10, h.length*2) }));
   XLSX.utils.book_append_sheet(wb, ws, '선택 확정리스트');
-  XLSX.writeFile(wb, `GA확정리스트_선택${list.length}건_${todayStr().replace(/-/g,'')}.xlsx`); toast(`선택 ${list.length}건 엑셀 다운로드 완료`);
+  XLSX.writeFile(wb, `대출확정리스트_선택${list.length}건_${todayStr().replace(/-/g,'')}.xlsx`); toast(`선택 ${list.length}건 엑셀 다운로드 완료`);
 }
 async function exportSelPdf(){
   const list = selDeals(); if(!list.length) return;
@@ -1903,7 +1905,7 @@ async function exportSelPdf(){
   const adm = isAdmin(), genAt = nowStr().slice(0,16);
   const wrap = document.createElement('div'); wrap.style.cssText = 'position:fixed;left:-20000px;top:0';
   wrap.innerHTML = `<div id="selDoc" style="width:1080px;background:#fff;padding:36px 40px;color:#111318;font-family:Pretendard,-apple-system,'Malgun Gothic',sans-serif">
-    <div class="r-head"><div><div class="t1">로드온 모빌리티 · GA 확정리스트</div><h2>확정 리스트 (선택 ${list.length}건)</h2></div>
+    <div class="r-head"><div><div class="t1">로드온 모빌리티 · 대출확정리스트</div><h2>확정 리스트 (선택 ${list.length}건)</h2></div>
       <div class="meta">취득원가 합계 <b style="color:var(--ink)">${fmt(list.reduce((a,d)=>a+num(d.acq_cost),0))}원</b>${adm?`<br>법인수익인센 ${fmt(list.reduce((a,d)=>a+incAmt(d,'corp_pct'),0))}원 · 법인 순이익 ${fmt(list.reduce((a,d)=>a+netAmt(d),0))}원`:''}<br>생성 ${genAt} · ${esc(S.me?.name||'')}</div></div>
     <div class="r-sec" style="page-break-inside:auto"><table><thead><tr><th>No</th><th>확정일</th><th>고객명</th><th>연락처</th><th>유형</th><th>차량명</th><th>계약</th><th>약정거리</th><th>인도일</th><th>계약 만기일</th><th>해지감면 만기</th><th>GA / 직영업</th><th>담당</th><th class="n">취득원가</th>${adm?'<th class="n">법인수익</th><th class="n">순이익</th>':''}<th>정산</th></tr></thead>
       <tbody>${list.map((d,i)=>`<tr><td>${i+1}</td><td>${d.confirm_date}</td><td><b>${esc(d.customer_name)}</b></td><td>${esc(d.phone||'')}</td><td>${d.product||''}</td><td>${esc(d.car_model||'')}</td><td>${d.contract_months?d.contract_months+'개월':''}${d.early_type?' ('+d.early_type+')':''}</td><td>${num(d.terms?.mileage_km) ? fmt(d.terms.mileage_km)+'km' : ''}</td><td>${d.delivered_at||'미입력'}</td><td>${matDate(d)||'-'}</td><td>${earlyDate(d)||'-'}</td><td>${esc(grpLabel(grpKey(d)))}</td><td>${esc(staffName(d.staff_id)||'')}</td><td class="n">${fmt(d.acq_cost)}</td>${adm?`<td class="n">${fmt(incAmt(d,'corp_pct'))}</td><td class="n">${fmt(netAmt(d))}</td>`:''}<td>${d.settled?md(d.settled_at):'미완료'}</td></tr>`).join('')}</tbody></table></div>
@@ -1915,7 +1917,7 @@ async function exportSelPdf(){
   do { tbl.style.fontSize = fs+'px'; wrap.querySelectorAll('th').forEach(c => c.style.fontSize = (fs-0.5)+'px'); fs -= 0.5; } while(tbl.offsetWidth > 1000 && fs >= 6.5);
   loading(true, 'PDF 생성 중...');
   try{
-    await html2pdf().set({ margin:[8,8,8,8], filename:`GA확정리스트_선택${list.length}건_${todayStr().replace(/-/g,'')}.pdf`, image:{ type:'jpeg', quality:0.96 },
+    await html2pdf().set({ margin:[8,8,8,8], filename:`대출확정리스트_선택${list.length}건_${todayStr().replace(/-/g,'')}.pdf`, image:{ type:'jpeg', quality:0.96 },
       html2canvas:{ scale:2, useCORS:true, backgroundColor:'#ffffff' }, jsPDF:{ unit:'mm', format:'a4', orientation:'landscape' },
       pagebreak:{ mode:['css','legacy'], avoid:['tr','.r-head'] } }).from(wrap.firstElementChild).save();
     toast(`선택 ${list.length}건 PDF 다운로드 완료`);
@@ -1926,7 +1928,7 @@ function exportListExcel(){
   const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(dealRowsForExcel(S.listRows));
   ws['!cols'] = dealRowsForExcel([])[0].map(h => ({ wch: Math.max(10, h.length*2) }));
   XLSX.utils.book_append_sheet(wb, ws, '확정리스트');
-  XLSX.writeFile(wb, `GA확정리스트_${todayStr().replace(/-/g,'')}.xlsx`); toast('엑셀 다운로드 완료');
+  XLSX.writeFile(wb, `대출확정리스트_${todayStr().replace(/-/g,'')}.xlsx`); toast('엑셀 다운로드 완료');
 }
 
 /* ---------------- 자료 뷰어 ---------------- */
@@ -2114,7 +2116,7 @@ function buildReport(){
     <tbody>${rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td>${r[key].map(v=>`<td class="n">${v?fmt(v):'-'}</td>`).join('')}<td class="n"><b>${fmt(r[key].reduce((a,b)=>a+b,0))}</b></td></tr>`).join('')}</tbody>
     <tfoot><tr><td>합계</td>${tot.map(v=>`<td class="n">${fmt(v)}</td>`).join('')}<td class="n">${fmt(tot.reduce((a,b)=>a+b,0))}</td></tr></tfoot></table>`;
   $('#reportDoc').innerHTML = `
-    <div class="r-head"><div><div class="t1">로드온 모빌리티 · GA 확정리스트</div><h2>GA 업체별 실적 리포트</h2></div>
+    <div class="r-head"><div><div class="t1">로드온 모빌리티 · 대출확정리스트</div><h2>GA 업체별 실적 리포트</h2></div>
       <div class="meta">기간 <b style="color:var(--ink)">${f.replace('-','.')} ~ ${t.replace('-','.')}</b> (${ml}개월 · ${basis==='dlv'?'인도일':'확정일'} 기준)<br>대상 ${esc(scope)}<br>생성 ${genAt} · ${esc(S.me?.name||'')}</div></div>
     <div class="r-kpis">
       <div><div class="l">총 확정 건수</div><div class="v">${fmt(sc)}건</div></div>
@@ -2206,6 +2208,10 @@ const STAFF = {
   async remove(id){
     if(DEMO){ const d = Demo.load(); d.staff = d.staff.filter(x=>x.id!==id); d.deals.forEach(x=>{ if(x.staff_id===id) x.staff_id=null; }); Demo.save(); return; }
     const { error } = await sb.rpc('staff_delete', { p_id:id }); if(error) throw mapErr(error);
+  },
+  async resetSeq(){
+    if(DEMO){ const d = Demo.load(); const mx = Math.max(-1, ...d.staff.map(x => /^R\d+$/.test(x.login_id||'') ? +x.login_id.slice(1) : -1)); d.seq.login = mx + 1; Demo.save(); return 'R' + pad3(mx + 1); }
+    const { data, error } = await sb.rpc('staff_reset_seq'); if(error) throw mapErr(error); return data;
   },
   async getPw(id){
     if(DEMO) return Demo.load().staff.find(x=>x.id===id)?.pw || '';
@@ -2334,6 +2340,15 @@ async function openStaffForm(id){
       }
     }catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
   };
+}
+async function resetStaffSeq(){
+  const ids = S.staff.map(x => /^R\d+$/.test(x.login_id||'') ? +x.login_id.slice(1) : -1), next = 'R' + pad3(Math.max(-1, ...ids) + 1);
+  let cur = ''; try{ cur = await STAFF.nextId(); }catch(e){}
+  if(cur && cur===next) return toast(`이미 정리된 상태입니다. 다음 등록 아이디 : ${next}`);
+  if(!confirm(`아이디 번호를 초기화할까요?\n\n현재 다음 아이디 : ${cur||'-'}\n초기화 후 다음 아이디 : ${next}\n\n(현재 등록된 마지막 번호 다음부터 다시 부여 · 등록된 직원 정보는 바뀌지 않음)`)) return;
+  loading(true);
+  try{ const r = await STAFF.resetSeq(); toast(`초기화되었습니다. 다음 등록 아이디 : ${r}`); }
+  catch(e){ toast(errMsg(e),1); } finally{ loading(false); }
 }
 async function delMember(id){
   const m = S.staff.find(x=>x.id===id); if(!m || m.email===S.me.email) return;
